@@ -2,6 +2,8 @@ package entity;
 
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
 
 /**
  * @author Akasaka Isami
@@ -46,16 +48,18 @@ public class MyStatement {
     public MyStatement(Node node, String fileName) {
 
         if (node instanceof MethodDeclaration) {
-            this.originalRootNode = ((MethodDeclaration) node).asMethodDeclaration();
-            this.fileName = fileName;
-
             this.type = StatementType.METHOD_DECLARATION;
-            this.rowNum = originalRootNode.getBegin().isPresent() ? originalRootNode.getBegin().get().line : -1;
-            this.content = ((MethodDeclaration) originalRootNode).getDeclarationAsString(true, true, true);
-
-            this.id = fileName + "@" + rowNum;
+            this.rowNum = node.getBegin().isPresent() ? node.getBegin().get().line : -1;
+            this.content = ((MethodDeclaration) node).getDeclarationAsString(true, true, true);
+        } else if (node instanceof ExpressionStmt) {
+            this.type = StatementType.EXPRESSION;
+            this.rowNum = node.getBegin().isPresent() ? node.getBegin().get().line : -1;
+            this.content = ((ExpressionStmt) node).getExpression().toString();
         }
 
+        this.originalRootNode = node;
+        this.fileName = fileName;
+        this.id = fileName + "@" + rowNum;
 
     }
 

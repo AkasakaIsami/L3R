@@ -6,21 +6,35 @@ package entity;
  * @date 2022-12-14 20:33:11
  */
 public enum StatementType {
+
     METHOD_DECLARATION(0),
-    EXPRESSION(1),
-    IF(2),
-    WHILE(3),
-    FOR(4),
-    FOREACH(5),
-    SWITCH(6),
-    DO(7),
-    BREAK(8),
-    CONTINUED(9),
-    LABELED(10),
-    RETURN(11),
-    EMPTY(12),
-    ASSERT(13),
-    THROW(14);
+
+    ASSERT(1),
+    BLOCK(2),
+    BREAK(3),
+    CONTINUE(4),
+    DO(5),
+
+    EMPTY(6),
+    EXPLICIT_CONSTRUCTOR_INVOCATION(7),
+    EXPRESSION(8),
+    FOREACH(9),
+    FOR(10),
+
+    IF(11),
+    LABELED(12),
+    LOCAL_CLASS_DECLARATION(13),
+    RETURN(14),
+    SWTICHENTRY(15),
+
+    SWTICH(16),
+    SYNCHRONIZED(17),
+    THROW(18),
+    TRY(19),
+    UNPARSABLE(20),
+
+    WHILE(21);
+
 
     private int id;
 

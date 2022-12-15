@@ -5,6 +5,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import service.CFGBuilder;
 
 /**
  * @author Akasaka Isami
@@ -18,12 +19,12 @@ public class MethodVisitor extends VoidVisitorAdapter<Void> {
     public void visit(MethodDeclaration node, Void arg) {
         super.visit(node, arg);
 
-        if (node.getType() != null && node.getParentNode().isPresent()) {
+        if (node.getType() == null || !node.getParentNode().isPresent()) {
             logger.warn("");
             return;
         }
 
-        String methodName = node.getDeclarationAsString(true,false,true);
+        String methodName = node.getDeclarationAsString(true, false, true);
         logger.info("MethodVisitor: 正在处理的方法为" + methodName);
 
         if (!(node.getParentNode().get() instanceof TypeDeclaration)) {
@@ -31,7 +32,7 @@ public class MethodVisitor extends VoidVisitorAdapter<Void> {
             return;
         }
 
-
+        CFGBuilder.buildMethodCFG(node, "");
 
 
     }

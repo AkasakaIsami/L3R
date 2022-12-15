@@ -69,4 +69,13 @@ public class StatementNode {
     public void setDFGParents(List<StatementNode> DFGParents) {
         this.DFGParents = DFGParents;
     }
+
+    public void addCFGChild(StatementNode curNode) {
+        CFGChildren.add(curNode);
+    }
+
+    public void addCFGParent(StatementNode parentNode) {
+        CFGParents.add(parentNode);
+    }
+
 }

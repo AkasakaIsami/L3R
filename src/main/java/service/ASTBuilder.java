@@ -68,7 +68,7 @@ public class ASTBuilder {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        ASTBuilder builder = new ASTBuilder("C:\\Users\\akasa\\Study\\毕业设计\\L3R\\src\\main\\java\\ReversePolishNotation.java");
+        ASTBuilder builder = new ASTBuilder("C:\\Users\\akasa\\Study\\毕业设计\\L3R\\src\\main\\java\\demo.ReversePolishNotation.java");
         System.out.println(builder.cu.getClass());
 
     }
