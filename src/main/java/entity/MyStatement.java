@@ -40,7 +40,7 @@ public class MyStatement {
 
 
     /**
-     * 项目名_文件名_起始行数
+     * 项目名_文件名@起始行数
      */
     private String id;
 
@@ -51,6 +51,7 @@ public class MyStatement {
             this.type = StatementType.METHOD_DECLARATION;
             this.rowNum = node.getBegin().isPresent() ? node.getBegin().get().line : -1;
             this.content = ((MethodDeclaration) node).getDeclarationAsString(true, true, true);
+
         } else if (node instanceof ExpressionStmt) {
             this.type = StatementType.EXPRESSION;
             this.rowNum = node.getBegin().isPresent() ? node.getBegin().get().line : -1;
@@ -61,6 +62,13 @@ public class MyStatement {
         this.fileName = fileName;
         this.id = fileName + "@" + rowNum;
 
+    }
+
+    public MyStatement(String fileName, StatementType type, int rowNum, String content) {
+        this.fileName = fileName;
+        this.type = type;
+        this.rowNum = rowNum;
+        this.content = content;
     }
 
 
@@ -94,5 +102,21 @@ public class MyStatement {
 
     public void setRowNum(int rowNum) {
         this.rowNum = rowNum;
+    }
+
+    public Node getOriginalRootNode() {
+        return originalRootNode;
+    }
+
+    public void setOriginalRootNode(Node originalRootNode) {
+        this.originalRootNode = originalRootNode;
+    }
+
+    public StatementType getType() {
+        return type;
+    }
+
+    public void setType(StatementType type) {
+        this.type = type;
     }
 }

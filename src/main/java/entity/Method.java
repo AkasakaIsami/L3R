@@ -13,8 +13,8 @@ import java.util.Map;
  * @description 方法实体
  * @date 2022-12-13 15:07:59
  */
-public class Function {
-    private static final Logger logger = LoggerFactory.getLogger(Function.class);
+public class Method {
+    private static final Logger logger = LoggerFactory.getLogger(Method.class);
 
     private MethodDeclaration node;
     private String id; /** 项目名_文件名_函数+参数 构成该方法的唯一标识 */
@@ -28,10 +28,10 @@ public class Function {
 
     private List<MyStatement> statements;
 
-    private List<Function> parents;
-    private List<Function> children;
+    private List<Method> parents;
+    private List<Method> children;
 
-    Function(String _fileName, Node node) {
+    Method(String _fileName, Node node) {
         if (!(node instanceof MethodDeclaration)) {
             logger.error("Function constructor: 输入非MethodDeclaration节点");
             return;

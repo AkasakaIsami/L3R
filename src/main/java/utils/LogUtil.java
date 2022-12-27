@@ -16,38 +16,17 @@ import java.util.regex.Pattern;
  */
 public class LogUtil {
 
-    private static final String regexGLOBAL = ".*?(log|trace|(system\\.out)|(system\\.err)).*?(.*?);";
-
-    private static final Set<String> logIdentifier = new HashSet<String>() {
-        {
-            add("log");
-            add("logger");
-            add("logging");
-            add("getlogger");
-            add("getlog");
-        }
-    };
+    private static final String regexGLOBAL = ".*?(log|trace|(system\\.out)|(system\\.err)).*?(.*?)";
 
 
     /**
-     * 检测输入的statement（AST根节点）是否为一条日志语句
+     * 正则表达式判断输入的语句是否是日志语句
      *
-     * @param node
-     * @return
-     */
-    public static boolean isLogStatement(Node node) {
-
-
-        return false;
-    }
-
-
-
-    /**
      * @param curStatement
      * @return
      */
     public static boolean isLogStatement(String curStatement) {
+        //匹配引号中的内容
         Pattern p = Pattern.compile("\".*\"");
         Matcher m = p.matcher(curStatement);
 
@@ -57,22 +36,27 @@ public class LogUtil {
 
         /* if find quotes */
         if (m.find()) {
+            // 把引号中的东西删掉
             curStatement = curStatement.replaceAll("\".*?\"", "");
 
+            // 判断是不是"log"相关的语句 比如说包含了诸如login、dialog这种关键字而被误判的语句
             if (!isLogRelated(curStatement))
                 return false;
 
+            // 找等号 找到等号说明这个语句应该是logger实例的赋值语句
             p = Pattern.compile("[^\"]*?\\=");
             Matcher mEqualSign = p.matcher(curStatement);
 
             if (mEqualSign.find())
                 return false;
 
+            // 日志语句的正则匹配
             p = Pattern.compile("(system\\.out)|(system.err)|(log(ger)?(\\(\\))?\\.(\\w*?)\\()|logauditevent\\(", Pattern.CASE_INSENSITIVE);
             m = p.matcher(curStatement);
             return m.find();
 
         } else {
+            // 没引号就直接找等号 有等号的反正都不是日志语句
             p = Pattern.compile("[^\"]*?\\=");
             Matcher mEqualSign = p.matcher(curStatement);
 
@@ -91,12 +75,15 @@ public class LogUtil {
      * @return
      */
     private static boolean isLogRelated(String statement) {
+        //换行符？这个分支应该不会用
         if (statement.split("\r|\n|\r\n").length >= 3) // set as 3
         {
             return false;
         } else {
+
             Pattern p = Pattern.compile(regexGLOBAL, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
             Matcher m = p.matcher(statement);
+
             if (m.find()) {
                 if (statement.toLowerCase().contains("system.out") || statement.toLowerCase().contains("system.err")) {
                     return true;
@@ -112,5 +99,9 @@ public class LogUtil {
         return false;
     }
 
+
+    public static void main(String[] args) {
+        System.out.println(isLogStatement("if (LOG.isDebugEnabled())"));
+    }
 
 }

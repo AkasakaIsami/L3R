@@ -33,7 +33,10 @@ public enum StatementType {
     TRY(19),
     UNPARSABLE(20),
 
-    WHILE(21);
+    WHILE(21),
+
+    BLANK(22),
+    ELSE(23);
 
 
     private int id;

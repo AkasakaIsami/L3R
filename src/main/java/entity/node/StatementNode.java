@@ -14,6 +14,8 @@ public class StatementNode {
 
     private MyStatement statement;
 
+//    private ASTNode root;
+
     private List<StatementNode> CFGChildren;
     private List<StatementNode> DFGChildren;
 

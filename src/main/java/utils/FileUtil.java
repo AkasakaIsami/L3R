@@ -19,9 +19,9 @@ public class FileUtil {
      * 将目标文件下的所有java文件移动到指定文件，并重命名文件为”项目名+文件名“
      * 路径皆默认绝对路径
      *
-     * @param srcDirPath 源文件目录
+     * @param srcDirPath    源文件目录
      * @param targetDirPath 目标目录
-     * @param pjName 项目名
+     * @param pjName        项目名
      */
     public static void moveFiles(String srcDirPath, String targetDirPath, String pjName) {
         File srcDir = new File(srcDirPath);
@@ -90,6 +90,13 @@ public class FileUtil {
             return false;
         }
         return filename.substring(index + 1).equals("java");
+    }
+
+    public static String extractFileName(String filename) {
+        if (isJavaFile(filename)) {
+            return filename.substring(0, filename.indexOf("."));
+        }
+        return null;
     }
 
 }
