@@ -29,7 +29,7 @@ public class ASTCreater {
         if (node instanceof MethodDeclaration) {
             MethodDeclaration methodDeclaration = ((MethodDeclaration) node).asMethodDeclaration();
             System.out.println("********************************************");
-            System.out.println("当前正在生成AST节点方法的名字：" + methodDeclaration.getDeclarationAsString(false,false,true));
+            System.out.println("当前正在生成AST节点方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
             System.out.println("********************************************");
             String label = methodDeclaration.getDeclarationAsString(false, true, true);
             int lineNum = methodDeclaration.getBegin().isPresent() ? methodDeclaration.getBegin().get().line : -1;
@@ -59,7 +59,7 @@ public class ASTCreater {
             String label = expression.toString();
             int lineNum = expression.getBegin().isPresent() ? expression.getBegin().get().line : -1;
             GraphNode cfgNode = allCFGNodesMap.get(label + ":" + lineNum);
-            if(cfgNode==null){
+            if (cfgNode == null) {
                 System.out.println("stop");
             }
             AstNode astNode = new AstNode();
@@ -76,9 +76,9 @@ public class ASTCreater {
                 AstNodeInit astNodeInit = new AstNodeInit(true, ifAstNode);
                 astNodeInit.Init(tempIfStmt.getCondition());
                 ifCfgNode.setAstRootNode(ifAstNode);
-                if(!tempIfStmt.getThenStmt().isBlockStmt()){
+                if (!tempIfStmt.getThenStmt().isBlockStmt()) {
                     buildAST(tempIfStmt.getThenStmt());
-                }else {
+                } else {
                     BlockStmt thenBlockStmt = tempIfStmt.getThenStmt().asBlockStmt();
                     NodeList<Statement> statements = thenBlockStmt.getStatements();
                     for (Statement statement : statements) {
@@ -89,9 +89,9 @@ public class ASTCreater {
                     if (tempIfStmt.getElseStmt().get().isIfStmt()) {
                         tempIfStmt = tempIfStmt.getElseStmt().get().asIfStmt();
                     } else {
-                        if(!tempIfStmt.getElseStmt().get().isBlockStmt()){
+                        if (!tempIfStmt.getElseStmt().get().isBlockStmt()) {
                             buildAST(tempIfStmt.getElseStmt().get());
-                        }else {
+                        } else {
                             BlockStmt elseBlockStmt = tempIfStmt.getElseStmt().get().asBlockStmt();
                             NodeList<Statement> statements1 = elseBlockStmt.getStatements();
                             for (Statement statement : statements1) {
@@ -114,9 +114,9 @@ public class ASTCreater {
             astNodeInit.Init(whileStmt.getCondition());
             cfgNode.setAstRootNode(astNode);
 
-            if(!whileStmt.getBody().isBlockStmt()){
+            if (!whileStmt.getBody().isBlockStmt()) {
                 buildAST(whileStmt.getBody());
-            }else {
+            } else {
                 NodeList<Statement> statements = whileStmt.getBody().asBlockStmt().getStatements();
                 if (statements.size() == 0) {
                     return;
@@ -141,9 +141,9 @@ public class ASTCreater {
             astNodeInit.Init(forStmt);
             cfgNode.setAstRootNode(astNode);
 
-            if(!forStmt.getBody().isBlockStmt()){
+            if (!forStmt.getBody().isBlockStmt()) {
                 buildAST(forStmt.getBody());
-            }else {
+            } else {
                 NodeList<Statement> statements = forStmt.getBody().asBlockStmt().getStatements();
                 if (statements.size() == 0) {
                     return;
@@ -162,9 +162,9 @@ public class ASTCreater {
             astNodeInit.Init(foreachStmt);
             cfgNode.setAstRootNode(astNode);
 
-            if(!foreachStmt.getBody().isBlockStmt()){
+            if (!foreachStmt.getBody().isBlockStmt()) {
                 buildAST(foreachStmt.getBody());
-            }else {
+            } else {
                 NodeList<Statement> statements = foreachStmt.getBody().asBlockStmt().getStatements();
                 if (statements.size() == 0) {
                     return;
@@ -329,6 +329,28 @@ public class ASTCreater {
             for (Statement statement : statements) {
                 buildAST(statement);
             }
+
+            // 我写的
+            NodeList<CatchClause> catchClauses = tryStmt.getCatchClauses();
+            if (!catchClauses.isEmpty()) {
+                for (CatchClause catchClause : catchClauses) {
+                    String catchLabel = "catch (" + catchClause.getParameter().getType().toString() + " " + catchClause.getParameter().getName().toString() + ")";
+                    int catchLineNum = catchClause.getBegin().isPresent() ? catchClause.getBegin().get().line : -1;
+                    GraphNode catchNode = allCFGNodesMap.get(catchLabel + ":" + catchLineNum);
+
+                    AstNode catchAstNode = new AstNode();
+                    AstNodeInit catchAstNodeInit = new AstNodeInit(true, catchAstNode);
+                    catchAstNodeInit.Init(catchClause);
+                    catchNode.setAstRootNode(catchAstNode);
+
+                    BlockStmt catchBody = catchClause.getBody();
+                    NodeList<Statement> catchStatements = catchBody.getStatements();
+                    for (Statement statement : catchStatements) {
+                        buildAST(statement);
+                    }
+                }
+            }
+
             Optional<BlockStmt> finallyBlock = tryStmt.getFinallyBlock();
             if (finallyBlock.isPresent()) {
                 NodeList<Statement> finaBodyStas = finallyBlock.get().getStatements();
@@ -341,7 +363,7 @@ public class ASTCreater {
             ClassOrInterfaceDeclaration classOrInterfaceDeclaration = localClassDeclarationStmt.getClassDeclaration();
 
             String label = classOrInterfaceDeclaration.getNameAsString();
-            int lineNum = classOrInterfaceDeclaration.getBegin().isPresent()?classOrInterfaceDeclaration.getBegin().get().line:-1;
+            int lineNum = classOrInterfaceDeclaration.getBegin().isPresent() ? classOrInterfaceDeclaration.getBegin().get().line : -1;
 
             GraphNode cfgNode = allCFGNodesMap.get(label + ":" + lineNum);
             //处理ast

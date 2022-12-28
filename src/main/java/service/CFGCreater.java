@@ -165,7 +165,7 @@ public class CFGCreater {
                         if (tempIfStmt.getElseStmt().get().isExpressionStmt()) {
                             tempNode = buildCFG(elseNode, elseNode, tempIfStmt.getElseStmt().get());
                         } else if (!tempIfStmt.getElseStmt().get().isBlockStmt()) {
-                            tempNode = buildCFG(tempNode, elseNode, tempIfStmt.getElseStmt().get());
+                            tempNode = buildCFG(elseNode, elseNode, tempIfStmt.getElseStmt().get());
                         } else {
                             BlockStmt elseBlockStmt = tempIfStmt.getElseStmt().get().asBlockStmt();
                             NodeList<Statement> statements1 = elseBlockStmt.getStatements();
@@ -665,6 +665,8 @@ public class CFGCreater {
                 tempNode = buildCFG(tempNode, parentNode, statement);
             }
             return tempNode;
+
+
         } else if (node instanceof TryStmt) {
             TryStmt tryStmt = ((TryStmt) node).asTryStmt();
             GraphNode graphNode = new GraphNode();
@@ -684,33 +686,112 @@ public class CFGCreater {
             graphNode.setParentNode(parentNode);
             allNodesMap.put(graphNode.getOriginalCodeStr() + ":" + graphNode.getCodeLineNum(), graphNode);
 
+
+            // 这个placeholder整合try块和所有catch分支的
+            // 如果有finally 就连接到finally
+            // 如果没有 就返回这个placeholderNode
+            GraphNode placeholderNode = new GraphNode("#placeholder#", "placeholder");
+            Random random = new Random();
+            placeholderNode.setCodeLineNum(random.nextInt(10000));
+
+
             BlockStmt tryBlock = tryStmt.getTryBlock();
             GraphNode tempNode = graphNode;
             NodeList<Statement> statements = tryBlock.getStatements();
             for (Statement statement : statements) {
                 tempNode = buildCFG(tempNode, graphNode, statement);
             }
+
+            if (tempNode.getOriginalCodeStr().equals("#placeholder#")) {
+                List<GraphNode> preAdjacentPoints = tempNode.getPreAdjacentPoints();
+                for (GraphNode before : preAdjacentPoints) {
+                    before.addAdjacentPoint(placeholderNode);
+                    before.addEdg(new GraphEdge(EdgeTypes.CFG, before, placeholderNode));
+                    placeholderNode.addPreAdjacentPoints(before);
+                    before.getAdjacentPoints().remove(tempNode);
+                    before.removeEdges(tempNode);
+                }
+            } else {
+                tempNode.addAdjacentPoint(placeholderNode);
+                tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, placeholderNode));
+                placeholderNode.addPreAdjacentPoints(tempNode);
+            }
+
+
+            // 我写的
+
+            NodeList<CatchClause> catchClauses = tryStmt.getCatchClauses();
+            if (!catchClauses.isEmpty()) {
+
+                for (CatchClause catchClause : catchClauses) {
+                    // 对于每一个catch node 连接trynode
+                    String code = "catch (" + catchClause.getParameter().getType().toString() + " " + catchClause.getParameter().getName().toString() + ")";
+
+                    GraphNode catchNode = new GraphNode();
+                    catchNode.setOriginalCodeStr(code);
+                    catchNode.setOpTypeStr(catchClause.getClass().toString());
+                    catchNode.setCodeLineNum(catchClause.getBegin().isPresent() ? catchClause.getBegin().get().line : -1);
+
+                    graphNode.addAdjacentPoint(catchNode);
+                    graphNode.addEdg(new GraphEdge(EdgeTypes.CFG, graphNode, catchNode));
+                    catchNode.addPreAdjacentPoints(graphNode);
+
+                    catchNode.setParentNode(parentNode);
+                    allNodesMap.put(catchNode.getOriginalCodeStr() + ":" + catchNode.getCodeLineNum(), catchNode);
+
+                    BlockStmt catchBody = catchClause.getBody();
+                    GraphNode temp = catchNode;
+                    NodeList<Statement> catchStatements = catchBody.getStatements();
+                    for (Statement statement : catchStatements) {
+                        temp = buildCFG(temp, catchNode, statement);
+                    }
+
+                    if (temp.getOriginalCodeStr().equals("#placeholder#")) {
+                        List<GraphNode> preAdjacentPoints = temp.getPreAdjacentPoints();
+                        for (GraphNode before : preAdjacentPoints) {
+                            before.addAdjacentPoint(placeholderNode);
+                            before.addEdg(new GraphEdge(EdgeTypes.CFG, before, placeholderNode));
+                            placeholderNode.addPreAdjacentPoints(before);
+                            before.getAdjacentPoints().remove(temp);
+                            before.removeEdges(temp);
+                        }
+                    } else {
+                        temp.addAdjacentPoint(placeholderNode);
+                        temp.addEdg(new GraphEdge(EdgeTypes.CFG, temp, placeholderNode));
+                        placeholderNode.addPreAdjacentPoints(temp);
+                    }
+
+                }
+
+
+            }
+
+
             Optional<BlockStmt> finallyBlock = tryStmt.getFinallyBlock();
             if (finallyBlock.isPresent()) {
-                GraphNode finallayNode = new GraphNode();
-                finallayNode.setParentNode(parentNode);
-                finallayNode.setOriginalCodeStr("finallay");
-                finallayNode.setSimplifyCodeStr("finallay");
-                finallayNode.setOpTypeStr(finallayNode.getClass().toString());
-                finallayNode.setCodeLineNum(tryStmt.getFinallyBlock().get().getBegin().isPresent() ? tryStmt.getFinallyBlock().get().getBegin().get().line : -1);
-                allNodesMap.put(finallayNode.getOriginalCodeStr() + ":" + finallayNode.getCodeLineNum(), finallayNode);
+                // 如果存在final block
+                // catch的所有尾椎节点都接到finally节点上
 
-                tempNode.addAdjacentPoint(finallayNode);
-                tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, finallayNode));
-                finallayNode.addPreAdjacentPoints(tempNode);
+                placeholderNode.setParentNode(parentNode);
+                placeholderNode.setOriginalCodeStr("finally");
+                placeholderNode.setSimplifyCodeStr("finally");
+                placeholderNode.setOpTypeStr(placeholderNode.getClass().toString());
+                placeholderNode.setCodeLineNum(tryStmt.getFinallyBlock().get().getBegin().isPresent() ? tryStmt.getFinallyBlock().get().getBegin().get().line : -1);
+                allNodesMap.put(placeholderNode.getOriginalCodeStr() + ":" + placeholderNode.getCodeLineNum(), placeholderNode);
+
 
                 NodeList<Statement> finaBodyStas = finallyBlock.get().getStatements();
-                tempNode = finallayNode;
+                tempNode = placeholderNode;
                 for (Statement statement : finaBodyStas) {
-                    tempNode = buildCFG(tempNode, finallayNode, statement);
+                    tempNode = buildCFG(tempNode, placeholderNode, statement);
                 }
+                return tempNode;
+            } else {
+
+                return placeholderNode;
             }
-            return tempNode;
+
+//            return tempNode;
         } else if (node instanceof LocalClassDeclarationStmt) {
             LocalClassDeclarationStmt localClassDeclarationStmt = ((LocalClassDeclarationStmt) node).asLocalClassDeclarationStmt();
             ClassOrInterfaceDeclaration classOrInterfaceDeclaration = localClassDeclarationStmt.getClassDeclaration();
