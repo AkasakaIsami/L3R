@@ -17,6 +17,7 @@ public class CFG_ASTPrinter {
 
     private String path;
     private StringBuilder str;
+    private List<String> sentences;
     private int index = 0;
 
     private int index2 = 0;
@@ -26,12 +27,16 @@ public class CFG_ASTPrinter {
     // 遍历这个map，写入语句ast文件
     private Map<String, String> ASTStrMap;
 
+    private Set<GraphEdge> allDFGEdgesList;
 
-    public CFG_ASTPrinter(String path) {
+
+    public CFG_ASTPrinter(String path, Set<GraphEdge> allDFGEdgesList) {
         this.path = path;
         str = new StringBuilder("digraph {");
         leafNodes = new ArrayList<>();
         ASTStrMap = new HashMap<>();
+        this.allDFGEdgesList = allDFGEdgesList;
+        this.sentences = new ArrayList<>();
     }
 
     private void BFS(GraphNode root, boolean ncs) {
@@ -42,23 +47,40 @@ public class CFG_ASTPrinter {
             // par是一条语句
             GraphNode par = dealingNodes.poll();
             String parIndexNum = "";
+
             if (par.getDotNum() != null) {
                 parIndexNum = par.getDotNum();
             } else {
+                // par.getDotNum() != null 说明当前节点还没被画过
+
                 parIndexNum = "n" + (index++);
                 par.setDotNum(parIndexNum);
-                str.append(System.lineSeparator() + par.getDotNum() + " [label=\"" + DotPrintFilter.filterQuotation(par.getOriginalCodeStr()) + "\" , line=" + par.getCodeLineNum() + ", hasException=\" " + par.getIsExceptionLabel() + "\"];");
+
+                boolean isLogged = false;
+                List<GraphNode> adjacentPoints = par.getAdjacentPoints();
+                for (GraphNode child : adjacentPoints) {
+                    if (LogUtil.isLogStatement(child.getOriginalCodeStr(), 1)) {
+                        isLogged = true;
+                        break;
+                    }
+                }
+
+                str.append(System.lineSeparator()).append(par.getDotNum()).append(" [label=\"").append(DotPrintFilter.filterQuotation(par.getOriginalCodeStr())).append("\" , line=").append(par.getCodeLineNum()).append(", isLogged=\"").append(isLogged).append("\"];");
 
 
                 // 我改的 创建AST的代码
                 String label = DotPrintFilter.filterQuotation(par.getOriginalCodeStr());
                 String line = par.getCodeLineNum() + "";
                 String dotnum = par.getDotNum();
-                String key = dotnum + '_' + label + '_' + line;
+//                String key = dotnum + '_' + label + '_' + line;
+                String key = dotnum + '_' + line;
                 StringBuilder value = new StringBuilder();
                 value.append("digraph {");
 
-                dfs(par.getAstRootNode(), "", value);
+                StringBuilder sentence = new StringBuilder();
+                dfs(par.getAstRootNode(), "", value, sentence);
+                if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+                sentences.add(sentence.toString());
 
                 value.append(System.lineSeparator()).append("}");
                 index2 = 0;
@@ -74,17 +96,34 @@ public class CFG_ASTPrinter {
                     dealingNodes.add(child);
                     child.setDotNum("n" + (index));
                     index++;
-                    str.append(System.lineSeparator() + child.getDotNum() + " [label=\"" + DotPrintFilter.filterQuotation(child.getOriginalCodeStr()) + "\" , line=" + child.getCodeLineNum() + ", hasException=\" " + child.getIsExceptionLabel() + "\"];");
+
+
+                    boolean isLogged = false;
+                    List<GraphNode> grandChildren = child.getAdjacentPoints();
+                    for (GraphNode grandchild : grandChildren) {
+                        if (LogUtil.isLogStatement(grandchild.getOriginalCodeStr(), 1)) {
+                            isLogged = true;
+                            break;
+                        }
+                    }
+
+                    str.append(System.lineSeparator() + child.getDotNum() + " [label=\"" + DotPrintFilter.filterQuotation(child.getOriginalCodeStr()) + "\" , line=" + child.getCodeLineNum() + ", isLogged=\" " + isLogged + "\"];");
 
                     // 我改的 创建AST的代码
                     String label = DotPrintFilter.filterQuotation(child.getOriginalCodeStr());
                     String line = child.getCodeLineNum() + "";
                     String dotnum = child.getDotNum();
-                    String key = dotnum + '_' + label + '_' + line;
+//                    String key = dotnum + '_' + label + '_' + line;
+                    String key = dotnum + '_' + line;
                     StringBuilder value = new StringBuilder();
                     value.append("digraph {");
 
-                    dfs(child.getAstRootNode(), "", value);
+                    StringBuilder sentence = new StringBuilder();
+                    dfs(child.getAstRootNode(), "", value, sentence);
+                    if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+
+                    sentences.add(sentence.toString());
+
 
                     value.append(System.lineSeparator()).append("}");
                     index2 = 0;
@@ -100,10 +139,10 @@ public class CFG_ASTPrinter {
 
 
             for (GraphEdge edge : par.getEdgs()) {
-                if (LogUtil.isLogStatement(edge.getAimNode().getOriginalCodeStr())) {
+                if (LogUtil.isLogStatement(edge.getAimNode().getOriginalCodeStr(), 1)) {
                     // 如果当前节点的这条边指向的是log语句 直接跳过
                     continue;
-                } else if (LogUtil.isLogStatement(edge.getOriginalNode().getOriginalCodeStr())) {
+                } else if (LogUtil.isLogStatement(edge.getOriginalNode().getOriginalCodeStr(), 1)) {
                     // 如果当前节点就是log语句
                     // 连接log语句的父节点和log语句的子节点
 
@@ -117,10 +156,12 @@ public class CFG_ASTPrinter {
 
                     for (GraphNode parent :
                             parents) {
+                        // 如果父亲节点的子节点里已经有我们当前的子节点了 那就跳过
+                        List<GraphNode> brothers = parent.getAdjacentPoints();
+                        if (brothers.contains(child))
+                            continue;
                         str.append(System.lineSeparator()).append(parent.getDotNum()).append(" -> ").append(child.getDotNum()).append("[color=").append(edge.getType().getColor()).append("];");
-
                     }
-//                    str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
 
                 } else {
                     // 其他所有正常情况
@@ -131,14 +172,20 @@ public class CFG_ASTPrinter {
 
 
         }
+
+        for (GraphEdge edge : this.allDFGEdgesList) {
+            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
+        }
+
         if (ncs) {
             NCS(leafNodes);
         }
         str.append(System.lineSeparator() + "}");
     }
 
-    private void dfs(AstNode node, String parentNodeName, StringBuilder str) {
+    private void dfs(AstNode node, String parentNodeName, StringBuilder str, StringBuilder sentence) {
         if (node != null) {
+
             List<String> attributes = node.getAttributes();
             List<AstNode> subNodes = node.getSubNodes();
             List<String> subLists = node.getSubLists();
@@ -147,6 +194,8 @@ public class CFG_ASTPrinter {
             String ndName = "n" + (index2++);
 
             if (!node.toString().equals("")) {
+                String label = DotPrintFilter.AstNodeFilter(node.getTypeName());
+                sentence.append(DotPrintFilter.cut(label)).append(' ');
                 str.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(DotPrintFilter.AstNodeFilter(node.getTypeName())).append("\", ast_node=\"true\"];");
             }
 
@@ -155,22 +204,27 @@ public class CFG_ASTPrinter {
             }
 
             for (String a : attributes) {
+                String label = DotPrintFilter.AstNodeFilter(a);
+                sentence.append(DotPrintFilter.cut(label)).append(' ');
                 String attrName = "n" + (index2++);
                 str.append(System.lineSeparator()).append(attrName).append(" [label=\"").append(DotPrintFilter.AstNodeFilter(a)).append("\", ast_node=\"true\"];");
                 str.append(System.lineSeparator()).append(ndName).append(" -> ").append(attrName).append("[color=").append(EdgeTypes.AST.getColor()).append("];");
             }
 
             for (AstNode subNode : subNodes) {
-                dfs(subNode, ndName, str);
+                dfs(subNode, ndName, str, sentence);
             }
 
             for (int i = 0; i < subLists.size(); i++) {
+                String label = DotPrintFilter.AstNodeFilter(subLists.get(i));
+                sentence.append(DotPrintFilter.cut(label)).append(' ');
+
                 String ndLstName = "n" + (index2++);
                 str.append(System.lineSeparator()).append(ndLstName).append(" [label=\"").append(DotPrintFilter.AstNodeFilter(subLists.get(i))).append("\", ast_node=\"true\"];");
                 str.append(System.lineSeparator()).append(ndName).append(" -> ").append(ndLstName).append("[color=").append(EdgeTypes.AST.getColor()).append("];");
 
                 for (int j = 0; j < subListNodes.get(i).size(); j++) {
-                    dfs(subListNodes.get(i).get(j), ndLstName, str);
+                    dfs(subListNodes.get(i).get(j), ndLstName, str, sentence);
 //                    ASTRecurive(subListNodes.get(i).get(j), ndLstName);
                 }
 
@@ -249,16 +303,28 @@ public class CFG_ASTPrinter {
             String filename = entry.getKey();
             String filecontent = entry.getValue();
             try {
-                BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
-                        new File(path + "/statements/" + filename + ".dot")));
+                File ASTfile = new File(path + "/statements/" + filename + ".dot");
+                BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(ASTfile));
+
                 bufferedWriter.write(filecontent);
                 bufferedWriter.flush();
                 bufferedWriter.close();
 
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println("数据写入ast文件发送异常！");
             }
 
+        }
+
+        try (FileWriter writer = new FileWriter("/Users/akasakaisami/Study/Grade3/L3R/result/zookeeper/zookeeper_corpus.txt", true);
+             BufferedWriter bw = new BufferedWriter(writer)) {
+            for (String sentence : sentences) {
+                bw.append(sentence);
+                bw.newLine();
+            }
+        } catch (Exception e) {
+            System.out.println("数据写入语料库文件异常！");
         }
 
 

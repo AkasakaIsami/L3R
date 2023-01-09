@@ -123,9 +123,4 @@ public class LogUtil {
         return false;
     }
 
-
-    public static void main(String[] args) {
-        System.out.println(isLogStatement("LOG.debug(\"Processing request:: \" + request)",1));
-    }
-
 }
