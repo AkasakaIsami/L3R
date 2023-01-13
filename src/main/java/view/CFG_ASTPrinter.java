@@ -56,96 +56,47 @@ public class CFG_ASTPrinter {
                 parIndexNum = "n" + (index++);
                 par.setDotNum(parIndexNum);
 
-                boolean isLogged = false;
-                List<GraphNode> adjacentPoints = par.getAdjacentPoints();
-                for (GraphNode child : adjacentPoints) {
-                    if (LogUtil.isLogStatement(child.getOriginalCodeStr(), 1)) {
-                        isLogged = true;
-                        break;
-                    }
-                }
-
-                str.append(System.lineSeparator()).append(par.getDotNum()).append(" [label=\"").append(DotPrintFilter.filterQuotation(par.getOriginalCodeStr())).append("\" , line=").append(par.getCodeLineNum()).append(", isLogged=\"").append(isLogged).append("\"];");
-
-
-                // 我改的 创建AST的代码
-                String label = DotPrintFilter.filterQuotation(par.getOriginalCodeStr());
-                String line = par.getCodeLineNum() + "";
-                String dotnum = par.getDotNum();
-                String key = dotnum + '_' + line;
-
-                StringBuilder value = new StringBuilder();
-                value.append("digraph {");
-
-                StringBuilder sentence = new StringBuilder();
-
-                // 这里分两种情况 第一种情况是这个node有ast树 那就递归写入ast文件就好了
-                // 第二种情况是 这个node没有ast树 那就创建一个单节点的树 把当前节点的值写进去就行了
-                // 一般没有ast的都是简单节点 比如"return" "case"之类的
-
-                if (par.getAstRootNode() == null) {
-                    String node_value = par.getOpTypeStr();
-                    String ndName = "n" + index2;
-                    value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
-
-                    sentence.append(ndName);
-                    sentences.add(sentence.toString());
-                } else {
-                    dfs(par.getAstRootNode(), "", value, sentence);
-
-                    // 去掉语料库最后的空格
-                    if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
-                    sentences.add(sentence.toString());
-                }
-
-
-                value.append(System.lineSeparator()).append("}");
-                index2 = 0;
-                ASTStrMap.put(key, value.toString());
-            }
-
-            List<GraphNode> adjacentPoints = par.getAdjacentPoints();
-            for (GraphNode child : adjacentPoints) {
-                if (child.getDotNum() == null) {
-
-                    dealingNodes.add(child);
-                    child.setDotNum("n" + (index));
-                    index++;
-
-
+                // 首先要判断自己是不是日志语句……
+                // 应该没有人会啥b到连打两条日志语句吧…
+                if (!LogUtil.isLogStatement(par.getOriginalCodeStr(), 1)) {
+                    // 自己不是日志语句才会执行下面的代码
+                    // 也就是把自己加入到cfg中 再把生成自己的ast
                     boolean isLogged = false;
-                    List<GraphNode> grandChildren = child.getAdjacentPoints();
-                    for (GraphNode grandchild : grandChildren) {
-                        if (LogUtil.isLogStatement(grandchild.getOriginalCodeStr(), 1)) {
+                    List<GraphNode> adjacentPoints = par.getAdjacentPoints();
+                    for (GraphNode child : adjacentPoints) {
+                        if (LogUtil.isLogStatement(child.getOriginalCodeStr(), 1)) {
                             isLogged = true;
                             break;
                         }
                     }
 
-                    str.append(System.lineSeparator() + child.getDotNum() + " [label=\"" + DotPrintFilter.filterQuotation(child.getOriginalCodeStr()) + "\" , line=" + child.getCodeLineNum() + ", isLogged=\" " + isLogged + "\"];");
+                    str.append(System.lineSeparator()).append(par.getDotNum()).append(" [label=\"").append(DotPrintFilter.filterQuotation(par.getOriginalCodeStr())).append("\" , line=").append(par.getCodeLineNum()).append(", isLogged=\"").append(isLogged).append("\"];");
+
 
                     // 我改的 创建AST的代码
-                    String label = DotPrintFilter.filterQuotation(child.getOriginalCodeStr());
-                    String line = child.getCodeLineNum() + "";
-                    String dotnum = child.getDotNum();
+                    String label = DotPrintFilter.filterQuotation(par.getOriginalCodeStr());
+                    String line = par.getCodeLineNum() + "";
+                    String dotnum = par.getDotNum();
                     String key = dotnum + '_' + line;
+
                     StringBuilder value = new StringBuilder();
                     value.append("digraph {");
 
                     StringBuilder sentence = new StringBuilder();
+
                     // 这里分两种情况 第一种情况是这个node有ast树 那就递归写入ast文件就好了
                     // 第二种情况是 这个node没有ast树 那就创建一个单节点的树 把当前节点的值写进去就行了
-                    // 一般没有ast的都是简单节点 比如"return" "break" "finally" "else"之类的
+                    // 一般没有ast的都是简单节点 比如"return" "case"之类的
 
-                    if (child.getAstRootNode() == null) {
-                        String node_value = child.getOpTypeStr();
+                    if (par.getAstRootNode() == null) {
+                        String node_value = par.getOpTypeStr();
                         String ndName = "n" + index2;
                         value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
 
                         sentence.append(ndName);
                         sentences.add(sentence.toString());
                     } else {
-                        dfs(child.getAstRootNode(), "", value, sentence);
+                        dfs(par.getAstRootNode(), "", value, sentence);
 
                         // 去掉语料库最后的空格
                         if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
@@ -159,7 +110,72 @@ public class CFG_ASTPrinter {
                 }
             }
 
+            List<GraphNode> adjacentPoints = par.getAdjacentPoints();
+            for (GraphNode child : adjacentPoints) {
 
+                // 同样的 对于要创建边的子节点
+                // 只有非日志语句的节点才会被创建节点
+                // 但节点还是会被加入队列啦
+                if (child.getDotNum() == null) {
+
+                    dealingNodes.add(child);
+
+
+                    if (!LogUtil.isLogStatement(child.getOriginalCodeStr(), 1)) {
+                        child.setDotNum("n" + (index));
+                        index++;
+
+
+                        boolean isLogged = false;
+                        List<GraphNode> grandChildren = child.getAdjacentPoints();
+                        for (GraphNode grandchild : grandChildren) {
+                            if (LogUtil.isLogStatement(grandchild.getOriginalCodeStr(), 1)) {
+                                isLogged = true;
+                                break;
+                            }
+                        }
+
+                        str.append(System.lineSeparator() + child.getDotNum() + " [label=\"" + DotPrintFilter.filterQuotation(child.getOriginalCodeStr()) + "\" , line=" + child.getCodeLineNum() + ", isLogged=\" " + isLogged + "\"];");
+
+                        // 我改的 创建AST的代码
+                        String label = DotPrintFilter.filterQuotation(child.getOriginalCodeStr());
+                        String line = child.getCodeLineNum() + "";
+                        String dotnum = child.getDotNum();
+                        String key = dotnum + '_' + line;
+                        StringBuilder value = new StringBuilder();
+                        value.append("digraph {");
+
+                        StringBuilder sentence = new StringBuilder();
+                        // 这里分两种情况 第一种情况是这个node有ast树 那就递归写入ast文件就好了
+                        // 第二种情况是 这个node没有ast树 那就创建一个单节点的树 把当前节点的值写进去就行了
+                        // 一般没有ast的都是简单节点 比如"return" "break" "finally" "else"之类的
+
+                        if (child.getAstRootNode() == null) {
+                            String node_value = child.getOpTypeStr();
+                            String ndName = "n" + index2;
+                            value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
+
+                            sentence.append(ndName);
+                            sentences.add(sentence.toString());
+                        } else {
+                            dfs(child.getAstRootNode(), "", value, sentence);
+
+                            // 去掉语料库最后的空格
+                            if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+                            sentences.add(sentence.toString());
+                        }
+
+
+                        value.append(System.lineSeparator()).append("}");
+                        index2 = 0;
+                        ASTStrMap.put(key, value.toString());
+                    }
+
+                }
+            }
+
+
+            // 因为队列里还有log节点
             for (GraphEdge edge : par.getEdgs()) {
                 if (LogUtil.isLogStatement(edge.getAimNode().getOriginalCodeStr(), 1)) {
                     // 如果当前节点的这条边指向的是log语句 直接跳过
