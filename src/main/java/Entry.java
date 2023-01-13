@@ -16,13 +16,15 @@ import java.util.*;
  */
 public class Entry {
     private static final Logger logger = LoggerFactory.getLogger(Entry.class);
+    private static final String root = "data/processed/";
+    private static final String projectName = "zookeeper_demo";
+
 
     public static void main(String[] args) throws FileNotFoundException {
 
 
-        String srcDirPath = "/Users/akasakaisami/Study/Grade3/L3R/data/zookeeper_demo";
+        String srcDirPath = root + projectName;
         File srcDir = new File(srcDirPath);
-
         if (!srcDir.isDirectory()) {
             return;
         }

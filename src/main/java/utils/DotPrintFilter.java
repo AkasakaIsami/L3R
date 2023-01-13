@@ -151,8 +151,6 @@ public class DotPrintFilter {
                     //      后面是个小写 +' '+c
                     //      后面是个数字 +c
                     //      没有后面 +c
-
-
                     if (result.length() == 0) {
                         result.append(Character.toLowerCase(c));
                     } else if (!isUpper) {
@@ -189,11 +187,6 @@ public class DotPrintFilter {
         }
 
         return result.toString();
-    }
-
-
-    public static void main(String[] args) {
-        System.out.println("hello");
     }
 
 }

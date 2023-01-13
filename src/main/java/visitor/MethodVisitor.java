@@ -50,11 +50,8 @@ public class MethodVisitor extends VoidVisitorAdapter<String> {
         String path = "/Users/akasakaisami/Study/Grade3/L3R/result/zookeeper/" + FileUtil.extractFileName(fileName) + "/" + node.getNameAsString();
 
         for (GraphNode graphNode : graphNodes) {
-//            CFG_DFGPrinter printer = new CFG_DFGPrinter(path, dfgCreater.getAllDFGEdgesList());
-//            printer.print(graphNode, node.getNameAsString(), node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6));
-
             CFG_ASTPrinter printer2 = new CFG_ASTPrinter(path, dfgCreater.getAllDFGEdgesList());
-            printer2.print(graphNode, node.getNameAsString(), node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6),false);
+            printer2.print(graphNode, node.getNameAsString(), node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6), false);
 
         }
 

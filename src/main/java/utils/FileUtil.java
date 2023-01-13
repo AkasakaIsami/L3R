@@ -14,6 +14,9 @@ import java.io.File;
 public class FileUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(FileUtil.class);
+    private static final String root = "data/raw/";
+    private static final String target = "data/processed/";
+
 
     /**
      * 将目标文件下的所有java文件移动到指定文件，并重命名文件为”项目名+文件名“
@@ -24,12 +27,16 @@ public class FileUtil {
      * @param pjName        项目名
      */
     public static void moveFiles(String srcDirPath, String targetDirPath, String pjName) {
-        File srcDir = new File(srcDirPath);
-        File targetDir = new File(targetDirPath);
+        File srcDir = new File(srcDirPath + pjName);
+        File targetDir = new File(targetDirPath + pjName);
 
         if (!srcDir.exists()) {
             logger.info("源数据文件夹不存在");
             return;
+        }
+
+        if (!targetDir.exists()) {
+            targetDir.mkdirs();
         }
 
         if (!srcDir.isDirectory() || !targetDir.isDirectory()) {
@@ -78,7 +85,7 @@ public class FileUtil {
     }
 
     private static void moveFile(File file, File targetDir, String pjName) {
-        String newName = targetDir.getAbsolutePath() + '\\' + pjName + '_' + file.getName();
+        String newName = targetDir + "/" + pjName + '_' + file.getName();
         file.renameTo(new File(newName));
 
     }
@@ -97,6 +104,13 @@ public class FileUtil {
             return filename.substring(0, filename.indexOf("."));
         }
         return null;
+    }
+
+
+    public static void main(String[] args) {
+        String projectName = "flink";
+        FileUtil.moveFiles(root, target, projectName);
+
     }
 
 }

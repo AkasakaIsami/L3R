@@ -72,21 +72,36 @@ public class CFG_ASTPrinter {
                 String label = DotPrintFilter.filterQuotation(par.getOriginalCodeStr());
                 String line = par.getCodeLineNum() + "";
                 String dotnum = par.getDotNum();
-//                String key = dotnum + '_' + label + '_' + line;
                 String key = dotnum + '_' + line;
+
                 StringBuilder value = new StringBuilder();
                 value.append("digraph {");
 
                 StringBuilder sentence = new StringBuilder();
-                dfs(par.getAstRootNode(), "", value, sentence);
-                if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
-                sentences.add(sentence.toString());
+
+                // 这里分两种情况 第一种情况是这个node有ast树 那就递归写入ast文件就好了
+                // 第二种情况是 这个node没有ast树 那就创建一个单节点的树 把当前节点的值写进去就行了
+                // 一般没有ast的都是简单节点 比如"return" "case"之类的
+
+                if (par.getAstRootNode() == null) {
+                    String node_value = par.getOpTypeStr();
+                    String ndName = "n" + index2;
+                    value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
+
+                    sentence.append(ndName);
+                    sentences.add(sentence.toString());
+                } else {
+                    dfs(par.getAstRootNode(), "", value, sentence);
+
+                    // 去掉语料库最后的空格
+                    if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+                    sentences.add(sentence.toString());
+                }
+
 
                 value.append(System.lineSeparator()).append("}");
                 index2 = 0;
                 ASTStrMap.put(key, value.toString());
-
-//                ASTRecurive(par.getAstRootNode(), par.getDotNum());
             }
 
             List<GraphNode> adjacentPoints = par.getAdjacentPoints();
@@ -113,29 +128,36 @@ public class CFG_ASTPrinter {
                     String label = DotPrintFilter.filterQuotation(child.getOriginalCodeStr());
                     String line = child.getCodeLineNum() + "";
                     String dotnum = child.getDotNum();
-//                    String key = dotnum + '_' + label + '_' + line;
                     String key = dotnum + '_' + line;
                     StringBuilder value = new StringBuilder();
                     value.append("digraph {");
 
                     StringBuilder sentence = new StringBuilder();
-                    dfs(child.getAstRootNode(), "", value, sentence);
-                    if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+                    // 这里分两种情况 第一种情况是这个node有ast树 那就递归写入ast文件就好了
+                    // 第二种情况是 这个node没有ast树 那就创建一个单节点的树 把当前节点的值写进去就行了
+                    // 一般没有ast的都是简单节点 比如"return" "break" "finally" "else"之类的
 
-                    sentences.add(sentence.toString());
+                    if (child.getAstRootNode() == null) {
+                        String node_value = child.getOpTypeStr();
+                        String ndName = "n" + index2;
+                        value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
+
+                        sentence.append(ndName);
+                        sentences.add(sentence.toString());
+                    } else {
+                        dfs(child.getAstRootNode(), "", value, sentence);
+
+                        // 去掉语料库最后的空格
+                        if (sentence.length() != 0) sentence.deleteCharAt(sentence.length() - 1);
+                        sentences.add(sentence.toString());
+                    }
 
 
                     value.append(System.lineSeparator()).append("}");
                     index2 = 0;
                     ASTStrMap.put(key, value.toString());
-
-//                    ASTRecurive(child.getAstRootNode(), child.getDotNum());
                 }
             }
-//            for (GraphEdge edge : par.getEdgs()) {
-//                str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
-//
-//            }
 
 
             for (GraphEdge edge : par.getEdgs()) {
@@ -225,52 +247,12 @@ public class CFG_ASTPrinter {
 
                 for (int j = 0; j < subListNodes.get(i).size(); j++) {
                     dfs(subListNodes.get(i).get(j), ndLstName, str, sentence);
-//                    ASTRecurive(subListNodes.get(i).get(j), ndLstName);
                 }
 
             }
 
 
         }
-    }
-
-    private void ASTRecurive(AstNode node, String parentNodeName) {
-        if (node != null) {
-            List<String> attributes = node.getAttributes();
-            List<AstNode> subNodes = node.getSubNodes();
-            List<String> subLists = node.getSubLists();
-            List<List<AstNode>> subListNodes = node.getSubListNodes();
-            String ndName = nextNodeName();
-            if (!node.toString().equals("")) {
-                str.append(System.lineSeparator() + ndName + " [label=\"" + DotPrintFilter.AstNodeFilter(node.getTypeName()) + "\", ast_node=\"true\"];");
-            }
-            if (parentNodeName != null) {
-                str.append(System.lineSeparator() + parentNodeName + " -> " + ndName + "[color=" + EdgeTypes.AST.getColor() + "];");
-            }
-            for (String a : attributes) {
-                String attrName = nextNodeName();
-                str.append(System.lineSeparator() + attrName + " [label=\"" + DotPrintFilter.AstNodeFilter(a) + "\", ast_node=\"true\"];");
-                str.append(System.lineSeparator() + ndName + " -> " + attrName + "[color=" + EdgeTypes.AST.getColor() + "];");
-                if (DotPrintFilter.AstNodeFilter(a).contains("identifier") || DotPrintFilter.AstNodeFilter(a).contains("value")) {
-                    leafNodes.add(attrName);
-                }
-            }
-            for (int i = 0; i < subNodes.size(); i++) {
-                ASTRecurive(subNodes.get(i), ndName);
-            }
-            for (int i = 0; i < subLists.size(); i++) {
-                String ndLstName = nextNodeName();
-                str.append(System.lineSeparator() + ndLstName + " [label=\"" + DotPrintFilter.AstNodeFilter(subLists.get(i)) + "\", ast_node=\"true\"];");
-                str.append(System.lineSeparator() + ndName + " -> " + ndLstName + "[color=" + EdgeTypes.AST.getColor() + "];");
-                for (int j = 0; j < subListNodes.get(i).size(); j++) {
-                    ASTRecurive(subListNodes.get(i).get(j), ndLstName);
-                }
-            }
-        }
-    }
-
-    private String nextNodeName() {
-        return "n" + (index++);
     }
 
     public void NCS(List<String> allLeafNodes) {
