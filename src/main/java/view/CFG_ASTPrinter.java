@@ -93,7 +93,7 @@ public class CFG_ASTPrinter {
                         String ndName = "n" + index2;
                         value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
 
-                        sentence.append(ndName);
+                        sentence.append(node_value);
                         sentences.add(sentence.toString());
                     } else {
                         dfs(par.getAstRootNode(), "", value, sentence);
@@ -155,7 +155,7 @@ public class CFG_ASTPrinter {
                             String ndName = "n" + index2;
                             value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
 
-                            sentence.append(ndName);
+                            sentence.append(node_value);
                             sentences.add(sentence.toString());
                         } else {
                             dfs(child.getAstRootNode(), "", value, sentence);
@@ -211,9 +211,10 @@ public class CFG_ASTPrinter {
 
         }
 
-        for (GraphEdge edge : this.allDFGEdgesList) {
-            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
-        }
+        //暂时
+//        for (GraphEdge edge : this.allDFGEdgesList) {
+//            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
+//        }
 
         if (ncs) {
             NCS(leafNodes);
