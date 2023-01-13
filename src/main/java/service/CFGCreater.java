@@ -96,13 +96,15 @@ public class CFGCreater {
             return graphNode;
         } else if (node instanceof IfStmt) {
             IfStmt tempIfStmt = ((IfStmt) node).asIfStmt();
-            GraphNode placeholderNode = new GraphNode("#placeholder#", "placeholder");
+            GraphNode placeholderNode = new GraphNode("endIf", "endIf");
             if (tempIfStmt.getEnd().isPresent()) {
                 placeholderNode.setCodeLineNum(tempIfStmt.getEnd().get().line + 1);
             } else {
                 Random random = new Random();
                 placeholderNode.setCodeLineNum(random.nextInt(10000));
             }
+            allNodesMap.put(placeholderNode.getOriginalCodeStr() + ":" + placeholderNode.getCodeLineNum(), placeholderNode);
+
             while (tempIfStmt != null) {
                 GraphNode graphNode = new GraphNode();
                 if (!predecessor.getOriginalCodeStr().equals("#placeholder#")) {
@@ -232,7 +234,18 @@ public class CFGCreater {
             tempNode.addAdjacentPoint(graphNode);
             tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, graphNode));
             graphNode.addPreAdjacentPoints(tempNode);
-            return graphNode;
+
+            GraphNode endWhileNode = new GraphNode("endWhile", "endWhile");
+            if (whileStmt.getEnd().isPresent()) {
+                endWhileNode.setCodeLineNum(whileStmt.getEnd().get().line + 1);
+            } else {
+                Random random = new Random();
+                endWhileNode.setCodeLineNum(random.nextInt(10000));
+            }
+            allNodesMap.put(endWhileNode.getOriginalCodeStr() + ":" + endWhileNode.getCodeLineNum(), endWhileNode);
+
+            connectByCFG(graphNode, endWhileNode);
+            return endWhileNode;
         } else if (node instanceof ForStmt) {
             List<String> forValues = new ArrayList<>();
             ForStmt forStmt = ((ForStmt) node).asForStmt();
@@ -272,7 +285,18 @@ public class CFGCreater {
             tempNode.addAdjacentPoint(graphNode);
             tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, graphNode));
             graphNode.addPreAdjacentPoints(tempNode);
-            return graphNode;
+
+            GraphNode endForNode = new GraphNode("endFor", "endFor");
+            if (forStmt.getEnd().isPresent()) {
+                endForNode.setCodeLineNum(forStmt.getEnd().get().line + 1);
+            } else {
+                Random random = new Random();
+                endForNode.setCodeLineNum(random.nextInt(10000));
+            }
+            allNodesMap.put(endForNode.getOriginalCodeStr() + ":" + endForNode.getCodeLineNum(), endForNode);
+
+            connectByCFG(graphNode, endForNode);
+            return endForNode;
         } else if (node instanceof ForeachStmt) {
             ForeachStmt foreachStmt = ((ForeachStmt) node).asForeachStmt();
             GraphNode graphNode = new GraphNode();
@@ -306,7 +330,18 @@ public class CFGCreater {
             tempNode.addAdjacentPoint(graphNode);
             tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, graphNode));
             graphNode.addPreAdjacentPoints(tempNode);
-            return graphNode;
+
+            GraphNode endForeachNode = new GraphNode("endForeach", "endForeach");
+            if (foreachStmt.getEnd().isPresent()) {
+                endForeachNode.setCodeLineNum(foreachStmt.getEnd().get().line + 1);
+            } else {
+                Random random = new Random();
+                endForeachNode.setCodeLineNum(random.nextInt(10000));
+            }
+            allNodesMap.put(endForeachNode.getOriginalCodeStr() + ":" + endForeachNode.getCodeLineNum(), endForeachNode);
+
+            connectByCFG(graphNode, endForeachNode);
+            return endForeachNode;
         } else if (node instanceof SwitchStmt) {
             SwitchStmt switchStmt = ((SwitchStmt) node).asSwitchStmt();
             GraphNode graphNode = new GraphNode();
@@ -330,8 +365,10 @@ public class CFGCreater {
             if (caseEntries.size() == 0) {
                 return graphNode;
             }
+
             List<GraphNode> caseNode = new ArrayList<>();
-            GraphNode placeholderNode = new GraphNode("#placeholder#", "placeholder");
+//            GraphNode placeholderNode = new GraphNode("#placeholder#", "placeholder");
+            GraphNode placeholderNode = new GraphNode("endSwtich", "endSwtich");
             placeholderNode.setParentNode(parentNode);
             if (switchStmt.getEnd().isPresent()) {
                 placeholderNode.setCodeLineNum(switchStmt.getEnd().get().line + 1);
@@ -339,6 +376,7 @@ public class CFGCreater {
                 Random random = new Random();
                 placeholderNode.setCodeLineNum(random.nextInt(10000));
             }
+
             for (int i = 0; i < caseEntries.size(); i++) {
                 GraphNode temp = new GraphNode(caseEntries.get(i).getLabel().isPresent() ? "case " + caseEntries.get(i).getLabel().get().toString() : "default", caseEntries.get(i).getClass().toString());
                 temp.setCodeLineNum(caseEntries.get(i).getBegin().isPresent() ? caseEntries.get(i).getBegin().get().line : -1);
@@ -349,6 +387,7 @@ public class CFGCreater {
                 allNodesMap.put(temp.getOriginalCodeStr() + ":" + temp.getCodeLineNum(), temp);
                 caseNode.add(temp);
             }
+
             for (int i = 0; i < caseEntries.size(); i++) {
                 NodeList<Statement> statements = caseEntries.get(i).getStatements();
                 GraphNode tempNode = caseNode.get(i);
@@ -421,6 +460,7 @@ public class CFGCreater {
             whileNode.addPreAdjacentPoints(tempNode);
             return whileNode;
         } else if (node instanceof BreakStmt) {
+            // 第三次遍历时会处理
             BreakStmt breakStmt = ((BreakStmt) node).asBreakStmt();
             GraphNode graphNode = new GraphNode();
             if (!predecessor.getOriginalCodeStr().equals("#placeholder#")) {
@@ -494,14 +534,18 @@ public class CFGCreater {
                     labelJoinplace = true;
                 }
             }
+
+            // 有break的话 lable就要指向for结束后的节点 在这里就是placeholderNode
             if (labelJoinplace) {
                 graphNode.addAdjacentPoint(placeholderNode);
                 graphNode.addEdg(new GraphEdge(EdgeTypes.CFG, graphNode, placeholderNode));
                 placeholderNode.addPreAdjacentPoints(graphNode);
             }
 
+            // 就是for body的最后一个节点 一般就是for循环本身吧
             GraphNode stateNode = buildCFG(graphNode, graphNode, labeledStmt.getStatement());
             if (!stateNode.getOriginalCodeStr().contains("break") && !stateNode.getOriginalCodeStr().equals("#placeholder#")) { //如果最后一个是break 则不能和placeholder相连
+                // 啥情况能跑到这里呢？
                 stateNode.addAdjacentPoint(placeholderNode);
                 stateNode.addEdg(new GraphEdge(EdgeTypes.CFG, stateNode, placeholderNode));
                 placeholderNode.addPreAdjacentPoints(stateNode);
@@ -510,6 +554,7 @@ public class CFGCreater {
                 return stateNode;
             }
             return placeholderNode;
+
         } else if (node instanceof ReturnStmt) {
             ReturnStmt returnStmt = ((ReturnStmt) node).asReturnStmt();
             GraphNode graphNode = new GraphNode();
@@ -656,7 +701,17 @@ public class CFGCreater {
             for (Statement statement : statements) {
                 tempNode = buildCFG(tempNode, graphNode, statement);
             }
-            return tempNode;
+
+            GraphNode endSynchronizedNode = new GraphNode("endSynchronized", "endSynchronized");
+            if (synchronizedStmt.getEnd().isPresent()) {
+                endSynchronizedNode.setCodeLineNum(synchronizedStmt.getEnd().get().line + 1);
+            } else {
+                Random random = new Random();
+                endSynchronizedNode.setCodeLineNum(random.nextInt(10000));
+            }
+            connectByCFG(tempNode, endSynchronizedNode);
+            return endSynchronizedNode;
+
         } else if (node instanceof BlockStmt) {
             BlockStmt blockStmt = ((BlockStmt) node).asBlockStmt();
             GraphNode tempNode = predecessor;
@@ -664,8 +719,16 @@ public class CFGCreater {
             for (Statement statement : statements) {
                 tempNode = buildCFG(tempNode, parentNode, statement);
             }
-            return tempNode;
 
+            GraphNode endBlockNode = new GraphNode("endBlock", "endBlock");
+            if (blockStmt.getEnd().isPresent()) {
+                endBlockNode.setCodeLineNum(blockStmt.getEnd().get().line + 1);
+            } else {
+                Random random = new Random();
+                endBlockNode.setCodeLineNum(random.nextInt(10000));
+            }
+            connectByCFG(tempNode, endBlockNode);
+            return endBlockNode;
 
         } else if (node instanceof TryStmt) {
             TryStmt tryStmt = ((TryStmt) node).asTryStmt();
@@ -690,7 +753,7 @@ public class CFGCreater {
             // 这个placeholder整合try块和所有catch分支的
             // 如果有finally 就连接到finally
             // 如果没有 就返回这个placeholderNode
-            GraphNode placeholderNode = new GraphNode("#placeholder#", "placeholder");
+            GraphNode placeholderNode = new GraphNode("endTry", "endTry");
             Random random = new Random();
             placeholderNode.setCodeLineNum(random.nextInt(10000));
 
@@ -785,13 +848,19 @@ public class CFGCreater {
                 for (Statement statement : finaBodyStas) {
                     tempNode = buildCFG(tempNode, placeholderNode, statement);
                 }
-                return tempNode;
-            } else {
 
+                GraphNode endTryNode = new GraphNode("endTry", "endTry");
+                if (tryStmt.getEnd().isPresent()) {
+                    endTryNode.setCodeLineNum(tryStmt.getEnd().get().line + 1);
+                } else {
+                    endTryNode.setCodeLineNum(random.nextInt(10000));
+                }
+                connectByCFG(tempNode, endTryNode);
+                return endTryNode;
+            } else {
                 return placeholderNode;
             }
 
-//            return tempNode;
         } else if (node instanceof LocalClassDeclarationStmt) {
             LocalClassDeclarationStmt localClassDeclarationStmt = ((LocalClassDeclarationStmt) node).asLocalClassDeclarationStmt();
             ClassOrInterfaceDeclaration classOrInterfaceDeclaration = localClassDeclarationStmt.getClassDeclaration();
@@ -815,6 +884,18 @@ public class CFGCreater {
             return graphNode;
         }
         return new GraphNode();
+    }
+
+    /**
+     * 前连后 前指向后
+     *
+     * @param preNode
+     * @param nextNode
+     */
+    private void connectByCFG(GraphNode preNode, GraphNode nextNode) {
+        preNode.addAdjacentPoint(nextNode);
+        preNode.addEdg(new GraphEdge(EdgeTypes.CFG, preNode, nextNode));
+        nextNode.addPreAdjacentPoints(preNode);
     }
 
     /**
@@ -1325,6 +1406,18 @@ public class CFGCreater {
             for (Statement statement : statements) {
                 buildCFG_3(statement);
             }
+
+            NodeList<CatchClause> catchClauses = tryStmt.getCatchClauses();
+            if (!catchClauses.isEmpty()) {
+                for (CatchClause catchClause : catchClauses) {
+                    BlockStmt catchBody = catchClause.getBody();
+                    NodeList<Statement> catchStatements = catchBody.getStatements();
+                    for (Statement statement : catchStatements) {
+                        buildCFG_3(statement);
+                    }
+                }
+            }
+
             Optional<BlockStmt> finallyBlock = tryStmt.getFinallyBlock();
             if (finallyBlock.isPresent()) {
                 //开始finllay 模块
