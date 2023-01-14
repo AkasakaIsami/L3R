@@ -14,8 +14,6 @@ import java.io.File;
 public class FileUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(FileUtil.class);
-    private static final String root = "data/raw/";
-    private static final String target = "data/processed/";
 
 
     /**
@@ -104,12 +102,6 @@ public class FileUtil {
             return filename.substring(0, filename.indexOf("."));
         }
         return null;
-    }
-
-
-    public static void main(String[] args) {
-        String projectName = "flink";
-        FileUtil.moveFiles(root, target, projectName);
     }
 
 }

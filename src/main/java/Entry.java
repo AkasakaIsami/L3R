@@ -21,8 +21,7 @@ public class Entry {
 
 
     public static void main(String[] args) throws FileNotFoundException {
-
-
+//        FileUtil.moveFiles(MConfig.rootDir, MConfig.processedTarget, MConfig.projectName);
         String srcDirPath = MConfig.rootDir + MConfig.projectName;
         File srcDir = new File(srcDirPath);
         if (!srcDir.isDirectory()) {
@@ -54,14 +53,17 @@ public class Entry {
         long endTime = new Date().getTime();
 
         logger.info("数据集构建完成，成功解析" + count + "个文件");
-        logger.info("解析错误的文件有" + parseFailFiles.size() + "个");
-        StringBuilder allFailFiles = new StringBuilder();
+        if (!parseFailFiles.isEmpty()) {
+            logger.info("解析错误的文件有" + parseFailFiles.size() + "个");
+            StringBuilder allFailFiles = new StringBuilder();
 
-        for (String failFile : parseFailFiles) {
-            allFailFiles.append(failFile).append("、");
+            for (String failFile : parseFailFiles) {
+                allFailFiles.append(failFile).append("、");
+            }
+
+            logger.info("解析错误的文件:" + allFailFiles);
         }
 
-        logger.info("解析错误的文件:" + allFailFiles);
         logger.info("运行时间： " + (endTime - startTime) / 1000 + "秒");
 
 

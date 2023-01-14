@@ -1431,10 +1431,16 @@ public class CFGCreater {
 
             String label = returnStmt.getExpression().isPresent() ? "return " + returnStmt.getExpression().get().toString() : "return";
             int num = returnStmt.getBegin().isPresent() ? returnStmt.getBegin().get().line : -1;
-            GraphNode breakNode = allNodesMap.get(label + ":" + num);
+            GraphNode ReturnStmt = allNodesMap.get(label + ":" + num);
 
-            breakNode.getAdjacentPoints().clear();
-            breakNode.getEdgs().clear();
+            // 有一种情况不要清空
+            // 如果return在try或者catch语句中
+            // 就直接按照正常逻辑连接吧- -懒得想怎么改了
+
+            if (!ReturnStmt.getParentNode().getOpTypeStr().equals("class com.github.javaparser.ast.stmt.TryStmt") && !ReturnStmt.getParentNode().getOpTypeStr().equals("class com.github.javaparser.ast.stmt.CatchClause")) {
+                ReturnStmt.getAdjacentPoints().clear();
+                ReturnStmt.getEdgs().clear();
+            }
         }
         return false;
     }

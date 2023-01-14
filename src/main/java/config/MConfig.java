@@ -8,7 +8,9 @@ package config;
  */
 public class MConfig {
     public static final String rootDir = "data/processed/";
-    public static final String projectName = "kafka";
+    public static final String projectName = "kafkademo";
+//    public static final String projectName = "zookeeperdemo";
     public static final String targetDir = "result/";
+    public static final String processedTarget = "data/processed/";
 
 }

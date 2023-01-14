@@ -53,15 +53,13 @@ public class CFG_ASTPrinter {
                 parIndexNum = par.getDotNum();
             } else {
                 // par.getDotNum() != null 说明当前节点还没被画过
-
-                parIndexNum = "n" + (index++);
-                par.setDotNum(parIndexNum);
-
                 // 首先要判断自己是不是日志语句……
                 // 应该没有人会啥b到连打两条日志语句吧…
                 if (!LogUtil.isLogStatement(par.getOriginalCodeStr(), 1)) {
                     // 自己不是日志语句才会执行下面的代码
                     // 也就是把自己加入到cfg中 再把生成自己的ast
+                    parIndexNum = "n" + (index++);
+                    par.setDotNum(parIndexNum);
                     boolean isLogged = false;
                     List<GraphNode> adjacentPoints = par.getAdjacentPoints();
                     for (GraphNode child : adjacentPoints) {
@@ -110,6 +108,7 @@ public class CFG_ASTPrinter {
                     ASTStrMap.put(key, value.toString());
                 }
             }
+
 
             List<GraphNode> adjacentPoints = par.getAdjacentPoints();
             for (GraphNode child : adjacentPoints) {
@@ -183,24 +182,26 @@ public class CFG_ASTPrinter {
                     continue;
                 } else if (LogUtil.isLogStatement(edge.getOriginalNode().getOriginalCodeStr(), 1)) {
                     // 如果当前节点就是log语句
-                    // 连接log语句的父节点和log语句的子节点
-
-                    List<GraphNode> parents = edge.getOriginalNode().getPreAdjacentPoints();
                     List<GraphNode> children = edge.getOriginalNode().getAdjacentPoints();
-
                     int size = children.size();
                     if (size == 0) continue;
 
                     GraphNode child = children.get(0);
 
-                    for (GraphNode parent :
-                            parents) {
+                    // 如果子节点还是日志就别管了
+                    // 向上回溯找到第一个不是日志语句的祖先节点
+                    // 连接log语句的父节点和log语句的子节点
+                    if (!LogUtil.isLogStatement(child.getOriginalCodeStr(), 1)) {
+
+                        GraphNode ancestor = findNotLogAncestor(edge.getOriginalNode());
+
                         // 如果父亲节点的子节点里已经有我们当前的子节点了 那就跳过
-                        List<GraphNode> brothers = parent.getAdjacentPoints();
+                        List<GraphNode> brothers = ancestor.getAdjacentPoints();
                         if (brothers.contains(child))
                             continue;
-                        str.append(System.lineSeparator()).append(parent.getDotNum()).append(" -> ").append(child.getDotNum()).append("[color=").append(edge.getType().getColor()).append("];");
+                        str.append(System.lineSeparator()).append(ancestor.getDotNum()).append(" -> ").append(child.getDotNum()).append("[color=").append(edge.getType().getColor()).append("];");
                     }
+
 
                 } else {
                     // 其他所有正常情况
@@ -212,9 +213,9 @@ public class CFG_ASTPrinter {
 
         }
 
-        for (GraphEdge edge : this.allDFGEdgesList) {
-            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
-        }
+//        for (GraphEdge edge : this.allDFGEdgesList) {
+//            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
+//        }
 
         if (ncs) {
             NCS(leafNodes);
@@ -328,5 +329,18 @@ public class CFG_ASTPrinter {
         }
 
 
+    }
+
+    private GraphNode findNotLogAncestor(GraphNode node) {
+        while (node != null) {
+            if (!LogUtil.isLogStatement(node.getOriginalCodeStr(), 1)) {
+                return node;
+            }
+
+            if (!node.getPreAdjacentPoints().isEmpty()) {
+                node = node.getPreAdjacentPoints().get(0);
+            } else node = node.getParentNode();
+        }
+        return node;
     }
 }
