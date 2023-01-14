@@ -110,7 +110,6 @@ public class FileUtil {
     public static void main(String[] args) {
         String projectName = "flink";
         FileUtil.moveFiles(root, target, projectName);
-
     }
 
 }

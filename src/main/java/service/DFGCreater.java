@@ -35,9 +35,9 @@ public class DFGCreater {
                     return;
                 }
             }
-            System.out.println("********************************************");
-            System.out.println("当前正在CFG基础上生成DFG方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
-            System.out.println("********************************************");
+//            System.out.println("********************************************");
+//            System.out.println("当前正在CFG基础上生成DFG方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
+//            System.out.println("********************************************");
             String label = methodDeclaration.getDeclarationAsString(false, true, true);
             int lineNum = methodDeclaration.getBegin().isPresent() ? methodDeclaration.getBegin().get().line : -1;
             GraphNode methodNode = allCFGNodesMap.get(label + ":" + lineNum);
@@ -301,183 +301,6 @@ public class DFGCreater {
             GraphNode cfgNode = allCFGNodesMap.get(label + ":" + lineNum);
         }
         return parentDefVarMap;
-    }
-
-    /**
-     * 分析数据流的时候 就不是在statement级别上了，就需要在expression级别上了
-     *
-     * @param expression
-     */
-    private void expressionAnalysis(Expression expression) {
-        if (expression instanceof ArrayAccessExpr) {
-            /*
-             ArrayAccessExpr 就是获取数组值表达式 比如a = 12; datas[a]
-             */
-            ArrayAccessExpr arrayAccessExpr = expression.asArrayAccessExpr();
-            System.out.println(arrayAccessExpr + "当前：" + ArrayAccessExpr.class);
-            Expression name = arrayAccessExpr.getName();
-            Expression index = arrayAccessExpr.getIndex();
-            expressionAnalysis(name);
-
-        } else if (expression instanceof ClassExpr) {
-            /*
-            ClassExpr Object.class 一个类获取class对象
-             */
-            ClassExpr classExpr = expression.asClassExpr();
-            System.out.println(classExpr + "当前：" + ClassExpr.class);
-        } else if (expression instanceof ArrayCreationExpr) {
-            /*
-            ArrayCreationExpr new int[5] 5 可能变成其他变量 所以可能改变数据流
-             */
-            ArrayCreationExpr arrayCreationExpr = expression.asArrayCreationExpr();
-            System.out.println(arrayCreationExpr + "当前：" + ArrayCreationExpr.class);
-
-        } else if (expression instanceof LambdaExpr) {
-            /*
-            lambda (a, b) -> a+b 这是定义函数的方式 所以对于数据流没有任何帮助
-             */
-            LambdaExpr lambdaExpr = expression.asLambdaExpr();
-            System.out.println(lambdaExpr + "当前：" + LambdaExpr.class);
-
-        } else if (expression instanceof ConditionalExpr) {
-            /*
-             条件表达式 比如 if(a) 也就是里面有用
-             */
-            ConditionalExpr conditionalExpr = expression.asConditionalExpr();
-            System.out.println(conditionalExpr + "当前：" + ConditionalExpr.class);
-        } else if (expression instanceof MethodCallExpr) {
-            /*
-            MethodCallExpr System.out.println("true");
-             */
-            MethodCallExpr methodCallExpr = expression.asMethodCallExpr();
-            System.out.println(methodCallExpr + "当前：" + MethodCallExpr.class);
-
-        } else if (expression instanceof AnnotationExpr) {
-            /*
-            对数据流没有任何影响 这是方法的注解
-             */
-            AnnotationExpr annotationExpr = expression.asAnnotationExpr();
-            System.out.println(annotationExpr + "当前：" + AnnotationExpr.class);
-
-        } else if (expression instanceof AssignExpr) {
-            /*
-            赋值表达式   datas[0] = 1;
-             */
-            AssignExpr assignExpr = expression.asAssignExpr();
-            System.out.println(assignExpr + "当前：" + AssignExpr.class);
-            expressionAnalysis(assignExpr.getTarget());
-
-        } else if (expression instanceof InstanceOfExpr) {
-            /*
-            instance of 对于数据流没有任何影响
-             */
-            InstanceOfExpr instanceOfExpr = expression.asInstanceOfExpr();
-            System.out.println(instanceOfExpr + "当前：" + InstanceOfExpr.class);
-
-        } else if (expression instanceof CastExpr) {
-            /*
-            caseExpr  对于数据流没有任何影响 (long)15 long数字
-             */
-            CastExpr castExpr = expression.asCastExpr();
-            System.out.println(castExpr + "当前：" + CastExpr.class);
-
-        } else if (expression instanceof NameExpr) {
-            /*
-            变量的名字  switch(a) 里面的a
-             */
-            NameExpr nameExpr = expression.asNameExpr();
-            System.out.println(nameExpr + "当前：" + NameExpr.class);
-
-        } else if (expression instanceof ThisExpr) {
-            /*
-            this 字符 对于数据流没有任何影响
-             */
-            ThisExpr thisExpr = expression.asThisExpr();
-            System.out.println(thisExpr + "当前：" + ThisExpr.class);
-
-        } else if (expression instanceof EnclosedExpr) {
-            /*
-              括号内的表达式 (1+1)
-             */
-            EnclosedExpr enclosedExpr = expression.asEnclosedExpr();
-            System.out.println(enclosedExpr + "当前：" + EnclosedExpr.class);
-
-        } else if (expression instanceof MethodReferenceExpr) {
-            /*
-             方法引用 左边是对象 System.out::println 的println
-             */
-            MethodReferenceExpr methodReferenceExpr = expression.asMethodReferenceExpr();
-            System.out.println(methodReferenceExpr + "当前：" + MethodReferenceExpr.class);
-
-        } else if (expression instanceof VariableDeclarationExpr) {
-            /*
-            VariableDeclarator 是 VariableDeclarationExpr 更细的粒度
-            int[] datas = { 1, 2, 3, 4 } int a = 10
-             */
-            VariableDeclarationExpr variableDeclarationExpr = expression.asVariableDeclarationExpr();
-            System.out.println(variableDeclarationExpr + "当前：" + VariableDeclarationExpr.class);
-            NodeList<VariableDeclarator> variables = variableDeclarationExpr.getVariables();
-            for (VariableDeclarator var : variables) {
-
-
-            }
-
-
-        } else if (expression instanceof LiteralExpr) {
-            /*
-            文字表达式 也就是null true 等数值 对于数据流毫无影响
-             */
-            LiteralExpr literalExpr = expression.asLiteralExpr();
-            System.out.println(literalExpr + "当前：" + LiteralExpr.class);
-
-        } else if (expression instanceof ObjectCreationExpr) {
-            /*
-            new Exception("yichang") 声明变量的后一半
-             */
-            ObjectCreationExpr objectCreationExpr = expression.asObjectCreationExpr();
-            System.out.println(objectCreationExpr + "当前：" + ObjectCreationExpr.class);
-
-        } else if (expression instanceof UnaryExpr) {
-            /*
-            一元运算符 i++
-             */
-            UnaryExpr unaryExpr = expression.asUnaryExpr();
-            System.out.println(unaryExpr + "当前：" + UnaryExpr.class);
-        } else if (expression instanceof SuperExpr) {
-            /*
-               SuperExpr  super 这个字符 对于数据流影响
-             */
-            SuperExpr superExpr = expression.asSuperExpr();
-            System.out.println(superExpr + "当前：" + SuperExpr.class);
-
-        } else if (expression instanceof BinaryExpr) {
-            /*
-            二元操作符表达式 比如if 条件中 a==10
-             */
-            BinaryExpr binaryExpr = expression.asBinaryExpr();
-            System.out.println(binaryExpr + "当前：" + BinaryExpr.class);
-
-        } else if (expression instanceof TypeExpr) {
-            /*
-            方法引用 World::greet 的world 就是类型 类名字
-             */
-            TypeExpr typeExpr = expression.asTypeExpr();
-            System.out.println(typeExpr + "当前：" + TypeExpr.class);
-
-        } else if (expression instanceof ArrayInitializerExpr) {
-            /*
-            new int[][] {{1, 1}, {2, 2}}
-             */
-            ArrayInitializerExpr arrayInitializerExpr = expression.asArrayInitializerExpr();
-            System.out.println(arrayInitializerExpr + "当前：" + ArrayInitializerExpr.class);
-
-        } else if (expression instanceof FieldAccessExpr) {
-            /*
-            对象获取属性 FieldAccessExpr person.name
-             */
-            FieldAccessExpr fieldAccessExpr = expression.asFieldAccessExpr();
-            System.out.println(fieldAccessExpr + "当前：" + FieldAccessExpr.class);
-        }
     }
 
     /**
@@ -793,7 +616,7 @@ public class DFGCreater {
 
         List<Set<String>> varsUsed = analysisExprForVar(expression);
         // s0 用到的变量
-        // s1 被赋值的变量 可能是第一次定义 也可能是定义过但被重新赋值了
+        // s1 被赋值的变量 可能是第一次定义(int a = 0) 也可能是定义过但被重新赋值了(a = 0)
         Set<String> s0 = varsUsed.get(0);
         Set<String> s1 = varsUsed.get(1);
 
@@ -807,18 +630,8 @@ public class DFGCreater {
 
         // 更新定义
         for (String varName : s1) {
-            List<DFVarNode> tempNodes = getDefination(parentDefVarMap, varName);
-            if (!tempNodes.isEmpty()) {
-                // 已经被定义过了 更新即可
-                for (DFVarNode tempNode : tempNodes) {
-                    tempNode.setNode(node);
-                }
-            } else {
-                DFVarNode dfVarNode = new DFVarNode(varName, node);
-                parentDefVarMap.add(dfVarNode);
-            }
+            intersection(parentDefVarMap, varName, node);
         }
-
         return parentDefVarMap;
     }
 
@@ -831,7 +644,17 @@ public class DFGCreater {
      * @return 返回去除了除了当前这个变量之前的所有该变量，因为是单线路
      */
     private Set<DFVarNode> intersection(Set<DFVarNode> in, String varName, GraphNode node) {
-        return null;
+        List<DFVarNode> tempNodes = getDefination(in, varName);
+        if (!tempNodes.isEmpty()) {
+            // 已经被定义过了 更新即可
+            for (DFVarNode tempNode : tempNodes) {
+                tempNode.setNode(node);
+            }
+        } else {
+            DFVarNode dfVarNode = new DFVarNode(varName, node);
+            in.add(dfVarNode);
+        }
+        return in;
     }
 
     /**
@@ -856,7 +679,11 @@ public class DFGCreater {
      */
     private Set<DFVarNode> copy(Set<DFVarNode> in) {
         Set<DFVarNode> result = new HashSet<>();
-        result.addAll(in);
+        // 浅拷贝每个节点
+        for (DFVarNode node : in) {
+            DFVarNode clone = (DFVarNode) node.clone();
+            result.add(clone);
+        }
         return result;
     }
 
@@ -867,7 +694,6 @@ public class DFGCreater {
     public void setAllDFGEdgesList(Set<GraphEdge> allDFGEdgesList) {
         this.allDFGEdgesList = allDFGEdgesList;
     }
-
 
 
     /**

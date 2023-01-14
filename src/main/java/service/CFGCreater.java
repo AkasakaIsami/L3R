@@ -39,9 +39,9 @@ public class CFGCreater {
             if (methodDeclaration.getDeclarationAsString(false, false, true).equals("boolean equals(Object obj)")) {
                 System.out.println("daole");
             }
-            System.out.println("********************************************");
-            System.out.println("当前正在生成CFG方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
-            System.out.println("********************************************");
+//            System.out.println("********************************************");
+//            System.out.println("当前正在生成CFG方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
+//            System.out.println("********************************************");
             //创建方法名节点
             GraphNode graphNode = new GraphNode();
             graphNode.setOriginalCodeStr(methodDeclaration.getDeclarationAsString(false, true, true));
@@ -1426,6 +1426,15 @@ public class CFGCreater {
                     buildCFG_3(statement);
                 }
             }
+        } else if (node instanceof ReturnStmt) {
+            ReturnStmt returnStmt = ((ReturnStmt) node).asReturnStmt();
+
+            String label = returnStmt.getExpression().isPresent() ? "return " + returnStmt.getExpression().get().toString() : "return";
+            int num = returnStmt.getBegin().isPresent() ? returnStmt.getBegin().get().line : -1;
+            GraphNode breakNode = allNodesMap.get(label + ":" + num);
+
+            breakNode.getAdjacentPoints().clear();
+            breakNode.getEdgs().clear();
         }
         return false;
     }

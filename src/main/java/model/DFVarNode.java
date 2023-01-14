@@ -3,12 +3,12 @@ package model;
 import java.util.Objects;
 
 
-public class DFVarNode {
+public class DFVarNode implements Cloneable {
     private String varName;
     private GraphNode node;
     private String varType;
 
-    public DFVarNode(){
+    public DFVarNode() {
 
     }
 
@@ -74,4 +74,15 @@ public class DFVarNode {
                 ", varType='" + varType + '\'' +
                 '}';
     }
+
+    public Object clone() {
+        Object obj = null;
+        try {
+            obj = super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return obj;
+    }
+
 }

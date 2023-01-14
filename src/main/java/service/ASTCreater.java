@@ -28,9 +28,9 @@ public class ASTCreater {
     public void buildMethodAST(Node node) {
         if (node instanceof MethodDeclaration) {
             MethodDeclaration methodDeclaration = ((MethodDeclaration) node).asMethodDeclaration();
-            System.out.println("********************************************");
-            System.out.println("当前正在生成AST节点方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
-            System.out.println("********************************************");
+//            System.out.println("********************************************");
+//            System.out.println("当前正在生成AST节点方法的名字：" + methodDeclaration.getDeclarationAsString(false, false, true));
+//            System.out.println("********************************************");
             String label = methodDeclaration.getDeclarationAsString(false, true, true);
             int lineNum = methodDeclaration.getBegin().isPresent() ? methodDeclaration.getBegin().get().line : -1;
 

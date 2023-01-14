@@ -49,6 +49,7 @@ public class DotPrintFilter {
     }
 
     public static String cut(String originalStr) {
+
         // ast节点的三种形态：
         // 1. xxx
         // 2. xxx(xxx)
@@ -59,33 +60,38 @@ public class DotPrintFilter {
         Matcher m1 = parenthesesP.matcher(originalStr);
         Matcher m2 = equalP.matcher(originalStr);
 
-        if (m1.matches()) {
-            // xxx(xxx)
-            String[] ss = originalStr.split("\\(");
-            String s1 = ss[0];
-            String s2 = ss[1];
-            s1 = s1.substring(0, s1.length() - 1);
-            s2 = s2.substring(0, s2.length() - 1);
-            s1 = cutHump(s1);
-            s2 = cutHump(s2);
+        try {
+            if (m1.matches()) {
+                // xxx(xxx)
+                String[] ss = originalStr.split("\\(");
+                String s1 = ss[0];
+                String s2 = ss[1];
+                s1 = s1.substring(0, s1.length() - 1);
+                s2 = s2.substring(0, s2.length() - 1);
+                s1 = cutHump(s1);
+                s2 = cutHump(s2);
 
-            result.append(s1).append(' ').append(s2);
-            return result.toString();
+                result.append(s1).append(' ').append(s2);
+                return result.toString();
 
-        } else if (m2.matches()) {
-            // xxx='xxx'
-            String[] ss = originalStr.split("=");
-            String s1 = ss[0];
-            String s2 = ss[1];
-            s2 = s2.substring(1, s2.length() - 1);
-            s1 = cutHump(s1);
-            s2 = cutHump(s2);
+            } else if (m2.matches()) {
+                // xxx='xxx'
+                String[] ss = originalStr.split("=", 2);
+                String s1 = ss[0];
+                String s2 = ss[1];
+                s2 = s2.substring(1, s2.length() - 1);
+                s1 = cutHump(s1);
+                s2 = cutHump(s2);
 
-            result.append(s1).append(' ').append('=').append(' ').append(s2);
-        } else {
-            result.append(cutHump(originalStr));
-            return result.toString();
+                result.append(s1).append(' ').append('=').append(' ').append(s2);
+            } else {
+                result.append(cutHump(originalStr));
+                return result.toString();
+            }
+        } catch (StringIndexOutOfBoundsException e) {
+            throw new StringIndexOutOfBoundsException(originalStr + "出了问题");
         }
+
 
         return result.toString();
     }
@@ -111,22 +117,33 @@ public class DotPrintFilter {
      * @param str 要处理的ast节点的字符串
      * @return 处理完以后切割好的字符串序列 用空格拼接
      */
-    private static String cutHump(String str) {
+    private static String cutHump(String str) throws StringIndexOutOfBoundsException {
         StringBuilder result = new StringBuilder();
 
         Matcher lowerMatcher = allLowerP.matcher(str);
         Matcher upperMatcher = allUpperP.matcher(str);
         Matcher numMatcher = numP.matcher(str);
         Matcher capitalMatcher = capitalP.matcher(str);
-
-        if (str.contains("_")) {
+        if (str.contains(" ")) {
+            if (str.trim().length() == 0)
+                return str;
+            else {
+                String[] words = str.split(" ");
+                for (String word : words) {
+                    result.append(cutHump(word)).append(' ');
+                }
+                //去掉最后一个空格
+                result.deleteCharAt(result.length() - 1);
+            }
+        } else if (str.contains("_")) {
             // 包含下划线
             String[] words = str.split("_");
             for (String word : words) {
                 result.append(cutHump(word)).append(' ');
             }
             //去掉最后一个空格
-            result.deleteCharAt(result.length() - 1);
+            if (result.length() != 0)
+                result.deleteCharAt(result.length() - 1);
         } else if (lowerMatcher.matches() || numMatcher.matches()) {
             // 全小写或全数字
             return str;
@@ -189,4 +206,7 @@ public class DotPrintFilter {
         return result.toString();
     }
 
+    public static void main(String[] args) {
+        DotPrintFilter.cut("identifier='__'");
+    }
 }

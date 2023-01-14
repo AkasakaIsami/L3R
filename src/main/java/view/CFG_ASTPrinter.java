@@ -1,5 +1,6 @@
 package view;
 
+import config.MConfig;
 import model.AstNode;
 import model.EdgeTypes;
 import model.GraphEdge;
@@ -93,7 +94,7 @@ public class CFG_ASTPrinter {
                         String ndName = "n" + index2;
                         value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
 
-                        sentence.append(node_value);
+                        sentence.append(DotPrintFilter.cut(node_value));
                         sentences.add(sentence.toString());
                     } else {
                         dfs(par.getAstRootNode(), "", value, sentence);
@@ -155,7 +156,7 @@ public class CFG_ASTPrinter {
                             String ndName = "n" + index2;
                             value.append(System.lineSeparator()).append(ndName).append(" [label=\"").append(node_value).append("\", ast_node=\"true\"];");
 
-                            sentence.append(node_value);
+                            sentence.append(DotPrintFilter.cut(node_value));
                             sentences.add(sentence.toString());
                         } else {
                             dfs(child.getAstRootNode(), "", value, sentence);
@@ -211,10 +212,9 @@ public class CFG_ASTPrinter {
 
         }
 
-        //暂时
-//        for (GraphEdge edge : this.allDFGEdgesList) {
-//            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
-//        }
+        for (GraphEdge edge : this.allDFGEdgesList) {
+            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
+        }
 
         if (ncs) {
             NCS(leafNodes);
@@ -280,15 +280,16 @@ public class CFG_ASTPrinter {
         }
     }
 
-    public void print(GraphNode root, String methodName, String methodParms, boolean ncs) {
+    public void print(GraphNode root, String methodName, String uniqueMethodName, boolean ncs) {
         BFS(root, ncs);
+
         File file = new File(path + "/statements");
         if (!file.exists()) {
             file.mkdirs();
         }
         try {
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(
-                    new File(path + "/" + methodName + "." + methodParms + "_CA.dot")));
+                    new File(path + "/" + uniqueMethodName + "_CA.dot")));
             bufferedWriter.write(str.toString());
             bufferedWriter.flush();
             bufferedWriter.close();
@@ -316,7 +317,7 @@ public class CFG_ASTPrinter {
 
         }
 
-        try (FileWriter writer = new FileWriter("/Users/akasakaisami/Study/Grade3/L3R/result/zookeeper/zookeeper_corpus.txt", true);
+        try (FileWriter writer = new FileWriter(MConfig.targetDir + MConfig.projectName + "/" + MConfig.projectName + "_corpus.txt", true);
              BufferedWriter bw = new BufferedWriter(writer)) {
             for (String sentence : sentences) {
                 bw.append(sentence);

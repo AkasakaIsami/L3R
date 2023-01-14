@@ -3,16 +3,17 @@ package visitor;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
+import config.MConfig;
 import model.GraphNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import service.*;
 import utils.FileUtil;
 import view.CFG_ASTPrinter;
-import view.CFG_DFGPrinter;
 
 import java.util.List;
 import java.util.UUID;
+
 
 /**
  * @author Akasaka Isami
@@ -47,11 +48,12 @@ public class MethodVisitor extends VoidVisitorAdapter<String> {
         DFGCreater dfgCreater = new DFGCreater(cfgCreater.getAllNodesMap());
         dfgCreater.buildMethodDFG(node);
 
-        String path = "/Users/akasakaisami/Study/Grade3/L3R/result/zookeeper/" + FileUtil.extractFileName(fileName) + "/" + node.getNameAsString();
+        String uniqueMethodName = node.getNameAsString() + "_" + node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6);
+        String path = MConfig.targetDir + MConfig.projectName + "/" + FileUtil.extractFileName(fileName) + "/" + uniqueMethodName;
 
         for (GraphNode graphNode : graphNodes) {
             CFG_ASTPrinter printer2 = new CFG_ASTPrinter(path, dfgCreater.getAllDFGEdgesList());
-            printer2.print(graphNode, node.getNameAsString(), node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6), false);
+            printer2.print(graphNode, node.getNameAsString(), uniqueMethodName, false);
 
         }
 
