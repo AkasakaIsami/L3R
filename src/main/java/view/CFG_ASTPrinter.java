@@ -214,6 +214,11 @@ public class CFG_ASTPrinter {
         }
 
         for (GraphEdge edge : this.allDFGEdgesList) {
+            // 如果起始点的dotnum是null 说明是日志语句
+            // 日志语句的DFG忽略就可以了
+            if (edge.getOriginalNode().getDotNum() == null || edge.getAimNode().getDotNum() == null) {
+                continue;
+            }
             str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
         }
 
