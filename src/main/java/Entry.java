@@ -5,6 +5,7 @@ import com.github.javaparser.ast.visitor.VoidVisitor;
 import config.MConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import utils.FileUtil;
 import visitor.MethodVisitor;
 
 import java.io.File;
@@ -21,8 +22,11 @@ public class Entry {
 
 
     public static void main(String[] args) throws FileNotFoundException {
-//        FileUtil.moveFiles(MConfig.rootDir, MConfig.processedTarget, MConfig.projectName);
-        String srcDirPath = MConfig.rootDir + MConfig.projectName;
+        File test = new File(MConfig.rootDir + MConfig.primaryDir + MConfig.projectName);
+        if (!test.exists())
+            FileUtil.moveFiles(MConfig.rootDir + MConfig.srcDir, MConfig.rootDir + MConfig.primaryDir, MConfig.projectName);
+
+        String srcDirPath = MConfig.rootDir + MConfig.primaryDir + MConfig.projectName;
         File srcDir = new File(srcDirPath);
         if (!srcDir.isDirectory()) {
             return;

@@ -49,7 +49,7 @@ public class MethodVisitor extends VoidVisitorAdapter<String> {
         dfgCreater.buildMethodDFG(node);
 
         String uniqueMethodName = node.getNameAsString() + "_" + node.getParameters().size() + "_" + UUID.randomUUID().toString().substring(0, 6);
-        String path = MConfig.targetDir + MConfig.projectName + "/" + FileUtil.extractFileName(fileName) + "/" + uniqueMethodName;
+        String path = MConfig.rootDir+MConfig.rawDir + MConfig.projectName + "/" + FileUtil.extractFileName(fileName) + "/" + uniqueMethodName;
 
         for (GraphNode graphNode : graphNodes) {
             CFG_ASTPrinter printer2 = new CFG_ASTPrinter(path, dfgCreater.getAllDFGEdgesList());

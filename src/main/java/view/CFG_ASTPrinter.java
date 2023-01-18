@@ -213,9 +213,9 @@ public class CFG_ASTPrinter {
 
         }
 
-//        for (GraphEdge edge : this.allDFGEdgesList) {
-//            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
-//        }
+        for (GraphEdge edge : this.allDFGEdgesList) {
+            str.append(System.lineSeparator() + edge.getOriginalNode().getDotNum() + " -> " + edge.getAimNode().getDotNum() + "[color=" + edge.getType().getColor() + "];");
+        }
 
         if (ncs) {
             NCS(leafNodes);
@@ -284,7 +284,7 @@ public class CFG_ASTPrinter {
     public void print(GraphNode root, String methodName, String uniqueMethodName, boolean ncs) {
         BFS(root, ncs);
 
-        File file = new File(path + "/statements");
+        File file = new File(path);
         if (!file.exists()) {
             file.mkdirs();
         }
@@ -300,25 +300,24 @@ public class CFG_ASTPrinter {
 
 
         // 我写的
-        for (Map.Entry<String, String> entry : ASTStrMap.entrySet()) {
-            String filename = entry.getKey();
-            String filecontent = entry.getValue();
-            try {
-                File ASTfile = new File(path + "/statements/" + filename + ".dot");
-                BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(ASTfile));
-
+        try {
+            File ASTfile = new File(path + "/statements@" + uniqueMethodName + ".dot");
+            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(ASTfile));
+            for (Map.Entry<String, String> entry : ASTStrMap.entrySet()) {
+                String filecontent = entry.getValue();
                 bufferedWriter.write(filecontent);
-                bufferedWriter.flush();
-                bufferedWriter.close();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.out.println("数据写入ast文件发送异常！");
+                bufferedWriter.write("\n");
             }
+            bufferedWriter.flush();
+            bufferedWriter.close();
 
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("数据写入ast文件发送异常！");
         }
 
-        try (FileWriter writer = new FileWriter(MConfig.targetDir + MConfig.projectName + "/" + MConfig.projectName + "_corpus.txt", true);
+
+        try (FileWriter writer = new FileWriter(MConfig.rootDir + MConfig.rawDir + MConfig.projectName + "/" + MConfig.projectName + "_corpus.txt", true);
              BufferedWriter bw = new BufferedWriter(writer)) {
             for (String sentence : sentences) {
                 bw.append(sentence);
