@@ -217,10 +217,15 @@ public class ASTCreater {
             astNodeInit.Init(doStmt.getCondition());
             cfgNode.setAstRootNode(astNode);
 
-            NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
-            for (Statement statement : statements) {
-                buildAST(statement);
+            if (!doStmt.getBody().isBlockStmt()) {
+                buildAST(doStmt.getBody());
+            } else {
+                NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
+                for (Statement statement : statements) {
+                    buildAST(statement);
+                }
             }
+
         } else if (node instanceof BreakStmt) {
             BreakStmt breakStmt = ((BreakStmt) node).asBreakStmt();
 

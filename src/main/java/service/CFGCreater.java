@@ -445,16 +445,21 @@ public class CFGCreater {
             whileNode.setParentNode(parentNode);
             allNodesMap.put(whileNode.getOriginalCodeStr() + ":" + whileNode.getCodeLineNum(), whileNode);
 
-            NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
             GraphNode tempNode = graphNode;
-            for (Statement statement : statements) {
-                tempNode = buildCFG(tempNode, whileNode, statement);
+            if (!doStmt.getBody().isBlockStmt()) {
+                tempNode = buildCFG(tempNode, whileNode, doStmt.getBody());
+            } else {
+                NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
+                for (Statement statement : statements) {
+                    tempNode = buildCFG(tempNode, whileNode, statement);
+                }
             }
-            if (statements.size() != 0) {
-                whileNode.addAdjacentPoint(graphNode);
-                whileNode.addEdg(new GraphEdge(EdgeTypes.CFG, whileNode, graphNode));
-                graphNode.addPreAdjacentPoints(whileNode);
-            }
+
+            whileNode.addAdjacentPoint(graphNode);
+            whileNode.addEdg(new GraphEdge(EdgeTypes.CFG, whileNode, graphNode));
+            graphNode.addPreAdjacentPoints(whileNode);
+
+
             tempNode.addAdjacentPoint(whileNode);
             tempNode.addEdg(new GraphEdge(EdgeTypes.CFG, tempNode, whileNode));
             whileNode.addPreAdjacentPoints(tempNode);
@@ -1203,6 +1208,9 @@ public class CFGCreater {
             //存在
             DoStmt doStmt = ((DoStmt) node).asDoStmt();
             //先看看forStmt直接有没有break节点
+            if (!doStmt.getBody().isBlockStmt())
+                return true;
+
             NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
             if (statements.size() == 0) {
                 return true;

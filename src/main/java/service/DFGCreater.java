@@ -238,9 +238,14 @@ public class DFGCreater {
         } else if (node instanceof DoStmt) {
             DoStmt doStmt = ((DoStmt) node).asDoStmt();
             Set<DFVarNode> sonBlockDefVarSet = this.copy(parentDefVarMap);
-            NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
-            for (Statement statement : statements) {
-                sonBlockDefVarSet = buildDFG(statement, sonBlockDefVarSet);
+
+            if (!doStmt.getBody().isBlockStmt()) {
+                sonBlockDefVarSet = buildDFG(doStmt.getBody(), sonBlockDefVarSet);
+            } else {
+                NodeList<Statement> statements = doStmt.getBody().asBlockStmt().getStatements();
+                for (Statement statement : statements) {
+                    sonBlockDefVarSet = buildDFG(statement, sonBlockDefVarSet);
+                }
             }
             String label = "while (" + doStmt.getCondition().toString() + ")";
             int lineNum = doStmt.getCondition().getBegin().isPresent() ? doStmt.getCondition().getBegin().get().line : -1;
