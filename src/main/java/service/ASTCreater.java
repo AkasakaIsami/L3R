@@ -74,7 +74,8 @@ public class ASTCreater {
                 GraphNode ifCfgNode = allCFGNodesMap.get(ifLabel + ":" + ifLineNum);
                 AstNode ifAstNode = new AstNode();
                 AstNodeInit astNodeInit = new AstNodeInit(true, ifAstNode);
-                astNodeInit.Init(tempIfStmt.getCondition());
+//                astNodeInit.Init(tempIfStmt.getCondition());
+                astNodeInit.Init(tempIfStmt);
                 ifCfgNode.setAstRootNode(ifAstNode);
                 if (!tempIfStmt.getThenStmt().isBlockStmt()) {
                     buildAST(tempIfStmt.getThenStmt());
@@ -111,7 +112,7 @@ public class ASTCreater {
             GraphNode cfgNode = allCFGNodesMap.get(label + ":" + lineNum);
             AstNode astNode = new AstNode();
             AstNodeInit astNodeInit = new AstNodeInit(true, astNode);
-            astNodeInit.Init(whileStmt.getCondition());
+            astNodeInit.Init(whileStmt);
             cfgNode.setAstRootNode(astNode);
 
             if (!whileStmt.getBody().isBlockStmt()) {
@@ -214,7 +215,8 @@ public class ASTCreater {
             GraphNode cfgNode = allCFGNodesMap.get(label + ":" + lineNum);
             AstNode astNode = new AstNode();
             AstNodeInit astNodeInit = new AstNodeInit(true, astNode);
-            astNodeInit.Init(doStmt.getCondition());
+//            astNodeInit.Init(doStmt.getCondition());
+            astNodeInit.Init(doStmt);
             cfgNode.setAstRootNode(astNode);
 
             if (!doStmt.getBody().isBlockStmt()) {

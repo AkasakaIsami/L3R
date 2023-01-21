@@ -5,12 +5,15 @@ import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.comments.Comment;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.CatchClause;
+import com.github.javaparser.ast.stmt.IfStmt;
 import com.github.javaparser.metamodel.NodeMetaModel;
 import com.github.javaparser.metamodel.PropertyMetaModel;
 import model.AstNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static com.github.javaparser.utils.Utils.assertNotNull;
 import static java.util.stream.Collectors.toList;
@@ -31,8 +34,7 @@ public class AstNodeInit {
         output(node, "root", astNode);
     }
 
-    // node 语句node astnode 我为语句构建的astnode
-    // 或者 语句的子node以及其astnode
+
     private void output(Node node, String name, AstNode astNode) {
         assertNotNull(node);
         NodeMetaModel metaModel = node.getMetaModel();
@@ -49,8 +51,7 @@ public class AstNodeInit {
 
         if (outputNodeType) {
             astNode.setTypeName(name + " (" + metaModel.getTypeName() + ")");
-        }
-        else {
+        } else {
             astNode.setTypeName(name);
         }
 
@@ -62,7 +63,7 @@ public class AstNodeInit {
         for (PropertyMetaModel sn : subNodes) {
             Node nd = (Node) sn.getValue(node);
 
-            if (nd != null && !nd.toString().equals("") && !(nd instanceof BlockStmt)  && !(nd instanceof Comment)) {
+            if (nd != null && !nd.toString().equals("") && !(nd instanceof BlockStmt) && !(nd instanceof Comment) && !(nd instanceof IfStmt)) {
                 AstNode subAstNode = new AstNode();
                 astNode.getSubNodes().add(subAstNode);
                 astNode.setName(sn.getName());
@@ -83,7 +84,7 @@ public class AstNodeInit {
                 astNode.getSubListNodes().add(astNodes);
                 astNode.getSubListNodesPrimary().add(primaryNodes);
                 for (Node nd : nl) {
-                    if (!nd.toString().equals("") && !(nd instanceof BlockStmt) && !(nd instanceof CatchClause)) {
+                    if (!nd.toString().equals("") && !(nd instanceof BlockStmt) && !(nd instanceof CatchClause) && !(nd instanceof IfStmt)) {
                         primaryNodes.add(nd);
                         AstNode subAstNode = new AstNode();
                         astNodes.add(subAstNode);
@@ -94,6 +95,7 @@ public class AstNodeInit {
         }
 
 
-
     }
+
+
 }
