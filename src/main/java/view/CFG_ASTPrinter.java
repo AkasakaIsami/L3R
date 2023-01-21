@@ -105,7 +105,7 @@ public class CFG_ASTPrinter {
 
                     value.append(System.lineSeparator()).append("}");
                     index2 = 0;
-                    ASTStrMap.put(key, value.toString());
+                    ASTStrMap.put(dotnum, value.toString());
                 }
             }
 
@@ -168,7 +168,7 @@ public class CFG_ASTPrinter {
 
                         value.append(System.lineSeparator()).append("}");
                         index2 = 0;
-                        ASTStrMap.put(key, value.toString());
+                        ASTStrMap.put(dotnum, value.toString());
                     }
 
                 }
@@ -308,11 +308,14 @@ public class CFG_ASTPrinter {
         try {
             File ASTfile = new File(path + "/statements@" + uniqueMethodName + ".dot");
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(ASTfile));
-            for (Map.Entry<String, String> entry : ASTStrMap.entrySet()) {
-                String filecontent = entry.getValue();
+
+            int len = ASTStrMap.size();
+            for (int i = 0; i < len; i++) {
+                String filecontent = ASTStrMap.get("n"+i);
                 bufferedWriter.write(filecontent);
                 bufferedWriter.write("\n");
             }
+
             bufferedWriter.flush();
             bufferedWriter.close();
 
